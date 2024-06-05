@@ -11,13 +11,11 @@ The project came by the need for bigger datasets when data is scarce. Our team, 
 
 ## Project Scope
 Ideally, we want to pursuit the following goals:
-1.	Read the corresponding literature to have a wider point of view of the problem.
-2.	Analyze the data by visualization and various metrics.
-3.	Implement a neural network for classification of the images.
-4.	Implement some harmonization algorithms to increase the dataset dimension and so the accuracy of our model. 
-5.	Write a final report that describes our overall work.
-We leave to future implementations the following ideas that are outside our scope:
-1.	…?
+1.	Segment manually the images with defects, to identify precisely where the defects are in the images. 
+2.	Generate composite images by applying color transferring methods to the defects (foreground) without changing the background. These images, along with the original ones, will be used as training data for an end-to-end deep convolutional neural network based on encoder-decoder able to harmonize the artificial generated images based on Tsai Deep Image Harmonization. Unlike the referred model we won’t be implement the Scene Parsing Decoder because this is used only to give context (through labels) on the image when different domains are taken into consideration.
+3.	We will insert random defects into no-defect images and use the model described at point 2 to harmonize these crafted images. This process makes the background and the injected defects compatible in terms of light, color, and other visual attributes and such resulting in realistic examples of defect images.
+4.	Utilizing an already existing CNN-based image classifier, we would like to compare the performance using only the original dataset and the augmented one with the previously mentioned techniques, with the latter that should perform better.
+
 
 ## High-Level Requirements
 HW Requirements:
@@ -29,14 +27,21 @@ SW Requirements:
 
 ## Implementation Plan
 We would like to implement the following solutions:
-1.	Using already existing implementations, try Lenet, AlexNet, ResNet for classification and some other mixture of CNNs architectures.
-2.	Implement the literatures’ harmonization architectures (CNN-based, GANs), make a comparison among them, and chose the best one. 
+1. Classification Training: we will train a ResNet50 Model (and/or eventually some similar ones in case of poor results with ResNet50) on the existing no-augmented dataset, to evaluate the classification model before the augmentation. This evaluation will be used as a comparison afterword.
+2. Segmentation: given the restricted number of images we will manually make masks highlighting the defects.
+3. Generation: apply the linear color transferring methods (modify contrast, light, saturation, …) to the defects from the relative mask. 
+4. Image Harmonization Model Training: we will train the Autoencoder based on the Tsai Deep Image Harmonization Model, experimenting with various color transferring techniques.
+5. Dataset Augmentation: we will randomly apply random existing defects on no-defects images, which will then be harmonized with the previously trained model. 
+6. Classification Training: we will train a ResNet50 Model on the new augmented dataset.
+7. Evaluation: By testing the classification models we will compare the results obtained with both datasets, augmented and not, supposedly noticing an increase in performance using the augmented one.
+
 
 ## Tentative Timeline/Schedule
 Activity Description | Duration
 --- | --- 
-Read literature | 1 week
-Analysis of the data | 1 week
-Implementation of the classification networks | 2 week
-Implementation + experimentation of harmonization algorithms | 1 month
-Write report | 3 weeks
+Manual segmentation and implementation linear color transfer | 2 week
+Implementation of the classification networks | 1 week
+Implementation of the composing algorithm | 1 week
+Implementation + experimentation of harmonization algorithms | 3 weeks
+Training the networks and comparing results | 3 weeks
+Report writing | 3 weeks
