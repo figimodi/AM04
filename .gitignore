@@ -1,2 +1,9 @@
 # Virtual Environments
 .venv
+
+# Caches and logs
+__pycache__
+log/
+
+# VsCode
+.vscode

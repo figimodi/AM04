@@ -1,0 +1,18 @@
+dataset:
+  defects_folder: C:\Users\grfil\Documents\GitHub\AM04\data\Defects
+  splits: [.5, .25, .25]
+model:
+  epochs: 1
+  batch_size: 4
+  learning_rate: 1e-4
+  optimizer: adam
+  scheduler: none
+  only_test: False
+logger:
+  log_dir: C:\Users\grfil\Documents\GitHub\AM04\src\log
+  experiment_name: train_harmonization
+  version: 1
+checkpoint:
+  monitor: val_loss
+  save_top_k: 3
+  mode: min

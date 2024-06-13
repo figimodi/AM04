@@ -27,6 +27,13 @@ The dataset is composed of two folders:
 - Defects: contains a set of images with several defects like holes, spattering etc. They consist of 47 images of different layers with one or multiple defects in each of them without labeling. 
 - NoDefects: contains plain image of the powder bed without defects. They consist of 27 images without defects that could be used to generate synthetic images with defects. 
 
+## Run code and watch results
+First thing first, install all necessary libraries: `pip install -r requirements.txt`
+
+Then move to the directory `src/`:
+- Launch the training: `python .\train_harmonization.py --config configs/harmonization.yaml`
+- See results using tensorboard: `tensorboard --logdir log/train_harmonization/version_1/ --port 1500`
+
 ## References
 - Sun, S., M. Brandt, and M. Easton. "Powder bed fusion processes: an overview." Laser Additive Manufacturing: Materials, Design, Technologies, and Applications (2016): 55. 
 - Guo, Zonghui, et al. "Image Harmonization With Transformer." Proceedings of the IEEE/CVF International Conference on Computer Vision. 2021.
