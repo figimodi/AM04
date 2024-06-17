@@ -4,33 +4,37 @@ import random
 from PIL import Image,ImageEnhance
 import os
 
-def apply_color_transfer(image, mask):
+def apply_color_transfer(image_path, mask_path):
+    image = Image.open(image_path).convert('RGB')
+    mask = Image.open(mask_path).convert("L") 
+    
+    manipulated_images = []
+    
     masked_image = Image.new("RGB", image.size, (0, 0, 0))
     masked_image.paste(image, (0, 0), mask)  # Paste modifies in place
     
     br_enhancer = ImageEnhance.Brightness(masked_image)
     co_enhancer = ImageEnhance.Contrast(masked_image)
-    sa_enhancer = ImageEnhance.Color(masked_image)
+    #sa_enhancer = ImageEnhance.Color(masked_image)
     
+    #TODO: choose better strategies
     strategies = [
-        (lambda: br_enhancer.enhance(.5)),
-        (lambda: br_enhancer.enhance(1.5)),
-        (lambda: co_enhancer.enhance(.5)),
-        (lambda: co_enhancer.enhance(1.5)),
-        (lambda: sa_enhancer.enhance(.5)),
-        (lambda: sa_enhancer.enhance(1.5)),
+        (lambda: br_enhancer.enhance(.8)),
+        (lambda: br_enhancer.enhance(.9)),
+        (lambda: br_enhancer.enhance(1.1)),
+        (lambda: br_enhancer.enhance(1.2)),
+        (lambda: co_enhancer.enhance(.8)),
+        (lambda: co_enhancer.enhance(.9)),
+        (lambda: co_enhancer.enhance(1.1)),
+        (lambda: co_enhancer.enhance(1.2)),
     ]
     
-    for i, strategy in enumerate(strategies):
+    for strategy in strategies:
         manipulated_masked_image = strategy()
-        manipulated_masked_image.show()
-        original_image = image.copy()
-        original_image.paste(masked_image, (0, 0), mask)
         
-        original_image.save(os.path.join('test_color_transfer',f'Image18_{i}.jpg'))
-
-if __name__ == "__main__":
-    image = Image.open(os.path.join('test_color_transfer','Image18.jpg')).convert('RGB')
-    mask = Image.open(os.path.join('test_color_transfer','Image18_mask.jpg')).convert("L") 
-    
-    apply_color_transfer(image, mask)
+        manipulated_image = image.copy()
+        manipulated_image.paste(manipulated_masked_image, (0, 0), mask)
+        
+        manipulated_images.append(manipulated_image)
+        
+    return manipulated_images
