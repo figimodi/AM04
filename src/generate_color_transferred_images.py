@@ -72,4 +72,4 @@ def main():
 
 if __name__ == "__main__":
     delete_old_files()
-    main()
+     #main()
