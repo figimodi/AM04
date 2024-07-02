@@ -4,9 +4,7 @@ import random
 from PIL import Image,ImageEnhance
 import os
 
-def apply_color_transfer(image_path, mask_path):
-    image = Image.open(image_path).convert('RGB')
-    mask = Image.open(mask_path).convert("L") 
+def apply_color_transfer(image, mask):
     
     manipulated_images = []
     
