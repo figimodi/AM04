@@ -1,9 +1,9 @@
-from argparse import ArgumentParser
-from pathlib import Path
-from utils.config import Config
 import os
 import yaml
 import torch
+from argparse import ArgumentParser
+from pathlib import Path
+from utils.config import Config
 
 
 class Parser:
