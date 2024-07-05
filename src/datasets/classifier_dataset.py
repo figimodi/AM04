@@ -49,7 +49,11 @@ class ClassifierDataset(Dataset):
         # Load defect images paths
         defect_images_folders = [os.path.join(defects_folder, folder) 
                                 for folder in os.listdir(defects_folder) 
+<<<<<<< HEAD
                                 if os.path.isdir(os.path.join(defects_folder, folder))]
+=======
+                                if os.path.isdir(os.path.join(defects_folder, image))]
+>>>>>>> 7e1bdd5022b5c535d73d5d90f6a1f6574502bccc
         for folder in defect_images_folders:
             images = os.listdir(folder)
             defect_image = min(images, key=len)
