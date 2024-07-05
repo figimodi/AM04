@@ -27,14 +27,14 @@ class ClassifierDatasetSplit(Dataset):
             yield sample
 
 class ClassifierDataset(Dataset):
-    def __init__(self, no_defects_folder: Path, defects_folder: Path, synthetized_defects_folder: Path):
+    def __init__(self, no_defects_folder: Path, defects_folder: Path, synthetized_defects_folder: Path = None):
         super().__init__()
         self.data = self.__load__(no_defects_folder, defects_folder, synthetized_defects_folder)
 
     def __len__(self):
         return len(self.data)
 
-    def __load__(self, no_defects_folder: Path, defects_folder: Path, synthetized_defects_folder: Path) -> None:
+    def __load__(self, no_defects_folder: Path, defects_folder: Path, synthetized_defects_folder: Path = None) -> None:
         data = list()
         no_defect_images = list()
         defect_images = list()
@@ -49,11 +49,7 @@ class ClassifierDataset(Dataset):
         # Load defect images paths
         defect_images_folders = [os.path.join(defects_folder, folder) 
                                 for folder in os.listdir(defects_folder) 
-<<<<<<< HEAD
                                 if os.path.isdir(os.path.join(defects_folder, folder))]
-=======
-                                if os.path.isdir(os.path.join(defects_folder, image))]
->>>>>>> 7e1bdd5022b5c535d73d5d90f6a1f6574502bccc
         for folder in defect_images_folders:
             images = os.listdir(folder)
             defect_image = min(images, key=len)
@@ -61,9 +57,10 @@ class ClassifierDataset(Dataset):
 
         
         # Load synthetized defect images paths
-        synthetized_defect_images =[os.path.join(synthetized_defects_folder, image) 
-                                    for image in os.listdir(synthetized_defects_folder) 
-                                    if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
+        if synthetized_defects_folder:
+            synthetized_defect_images =[os.path.join(synthetized_defects_folder, image) 
+                                        for image in os.listdir(synthetized_defects_folder) 
+                                        if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
 
         for image_path in no_defect_images:
             data.append(
@@ -81,13 +78,14 @@ class ClassifierDataset(Dataset):
                 }
             )
 
-        for image_path in synthetized_defect_images:
-            data.append(
-                {
-                    'image_path': image_path,
-                    'label': 1,
-                }
-            )
+        if synthetized_defects_folder:
+            for image_path in synthetized_defect_images:
+                data.append(
+                    {
+                        'image_path': image_path,
+                        'label': 1,
+                    }
+                )
 
         return pd.DataFrame(data)
 

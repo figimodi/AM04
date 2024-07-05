@@ -66,7 +66,7 @@ class ResNetModule(LightningModule):
         return None
 
     def on_test_epoch_end(self):
-        label_mapping = {0: 'defects', 1: 'no_defects'}
+        label_mapping = {0: 'no_defects', 1: 'defects'}
         
         for i, (image, prediction, label) in enumerate(self.test_outputs):
             batch_size = image.shape[0]

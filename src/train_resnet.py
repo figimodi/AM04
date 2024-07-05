@@ -17,7 +17,7 @@ if __name__ == '__main__':
     classifier_dataset = ClassifierDataset(
         defects_folder=config.dataset.defects_folder, 
         no_defects_folder=config.dataset.no_defects_folder,
-        synthetized_defects_folder=config.dataset.synthetized_defects_folder,
+        # synthetized_defects_folder=config.dataset.synthetized_defects_folder,
     )
 
     # Create train-val-test splits
