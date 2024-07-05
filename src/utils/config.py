@@ -1,11 +1,14 @@
 from pydantic import BaseModel
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
     
 class DatasetConfig(BaseModel):
     defects_folder: Path
     splits: List[float]
+
+class ResNetDatasetConfig(DatasetConfig):
+    no_defects_folder: Path
 
 class ModelConfig(BaseModel):
     epochs: int
@@ -15,6 +18,9 @@ class ModelConfig(BaseModel):
     scheduler: str
     only_test: bool
     pretrained: Optional[Path] = None
+
+class ResNetConfig(ModelConfig):
+    resnet_type: str
 
 class LoggerConfig(BaseModel):
     log_dir: Path
@@ -27,7 +33,7 @@ class CheckpointConfig(BaseModel):
     mode: str
 
 class Config(BaseModel):
-    dataset: DatasetConfig
-    model: ModelConfig
+    dataset: Union[ResNetDatasetConfig, DatasetConfig]
+    model: Union[ResNetConfig, ModelConfig]
     logger: LoggerConfig
     checkpoint: CheckpointConfig
