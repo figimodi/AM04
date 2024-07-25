@@ -4,8 +4,9 @@ from itertools import combinations
 from PIL import Image
 import numpy as np
 
-PATH_MASK = os.path.join(os.getcwd(), 'data', 'DefectsMasks')
-PATH_DEFECTS = os.path.join(os.getcwd(), 'data', 'Defects')
+ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+PATH_MASK = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
+PATH_DEFECTS = os.path.join(ROOT_DIR, 'data', 'Defects')
 PATH_MASK_COMBINATIONS = os.path.join(PATH_MASK, 'combinations')
 
 def delete_old_files():
@@ -71,5 +72,6 @@ def main():
     
 
 if __name__ == "__main__":
+    os.makedirs(PATH_MASK_COMBINATIONS, exist_ok=True)
     delete_old_files()
     main()
