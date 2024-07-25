@@ -9,7 +9,7 @@ class DatasetConfig(BaseModel):
 
 class ResNetDatasetConfig(DatasetConfig):
     no_defects_folder: Path
-    synthetized_defects_folder: Path
+    synthetized_defects_folder: Optional[Path]
 
 class ModelConfig(BaseModel):
     epochs: int
