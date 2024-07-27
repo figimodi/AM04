@@ -10,4 +10,4 @@ log/
 
 # mask generation
 PDNPic/
-.pdn
+*.pdn
