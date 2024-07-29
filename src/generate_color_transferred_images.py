@@ -1,4 +1,5 @@
 import os
+import random
 from utils.color_transfering import apply_color_transfer
 from itertools import combinations
 from PIL import Image
@@ -13,12 +14,12 @@ def delete_old_files():
         if os.path.isdir(os.path.join(PATH_DEFECTS, dir_image)):
             for filename in os.listdir(os.path.join(PATH_DEFECTS, dir_image)):
                 file_path = os.path.join(PATH_DEFECTS, dir_image, filename)
-                if os.path.isfile(file_path) and ( '_ct_' in filename):
+                if os.path.isfile(file_path) and ( '_CT_' in filename):
                     os.remove(file_path)
 
     for defect_folder in os.listdir(PATH_MASK):
         if os.path.isdir(os.path.join(PATH_MASK, defect_folder)):
-            for comb_mask_file in os.listdir(PATH_MASK):
+            for comb_mask_file in os.listdir(os.path.join(PATH_MASK, defect_folder)):
                 if '_CB_' in comb_mask_file:
                     mask_comb_path = os.path.join(PATH_MASK, defect_folder, comb_mask_file)
                     os.remove(mask_comb_path)           
@@ -27,8 +28,11 @@ def delete_old_files():
     
 def main():
     #No laser, no whole mask
-    masks_filenames = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_MASK) if os.path.isdir(os.path.join(PATH_MASK, mask_folder)) and mask_filename.endswith('.jpg') and '_L_' not in mask_filename and '_mask' not in mask_filename for mask_filename in os.listdir(os.path.join(PATH_MASK, mask_folder))]
+    masks_filenames = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_MASK) if os.path.isdir(os.path.join(PATH_MASK, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_MASK, mask_folder)) if mask_filename.endswith('.jpg') and '_L_' not in mask_filename and '_Mask_' not in mask_filename]
     defect_folders = [ defect_folder for defect_folder in os.listdir(PATH_DEFECTS) if os.path.isdir(os.path.join(PATH_DEFECTS, defect_folder))]
+    
+    # print(masks_filenames)
+    # print(defect_folders)
     
     print('Generating color transferred images...')
     print(f'0/{len(defect_folders)}', end='\r')
@@ -36,15 +40,27 @@ def main():
     #iterate image defects
     for i_df, defect_folder in enumerate(defect_folders):
         # mask paths to current image defect
-        current_defect_masks = [mask_filename for mask_filename in masks_filenames if mask_filename.startswith(f'{defect_folder}_') ]
+        current_defect_masks = [mask_filename for mask_filename in masks_filenames if mask_filename.startswith(f'{defect_folder}{os.path.sep}') ]
+        
+        # print(current_defect_masks)
+        # print(defect_folder)
+        
+        if len(current_defect_masks) == 0:
+            continue
+        
         all_current_defect_masks = []
+            
+        if len(current_defect_masks) > 4:
+            all_current_defect_masks.extend(combinations(current_defect_masks, 1))
+        else:
+            for i_cdm in range(1, len(current_defect_masks)):
+                mask_combinations_i_cdm = combinations(current_defect_masks, i_cdm)    
+                all_current_defect_masks.extend(mask_combinations_i_cdm) # list of sublists (each sublist tells the combination of defect masks)
+                
+        if len(current_defect_masks) > 1 and os.path.isfile(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_Mask_0.jpg')):
+            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_0.jpg')])
         
-        #generate all possible combinations of mask defects for current defect image
-        for i_cdm in range(1, len(current_defect_masks)+1):
-            mask_combinations_i_cdm = combinations(current_defect_masks, i_cdm)    
-            all_current_defect_masks.extend(mask_combinations_i_cdm) # list of sublists (each sublist tells the combination of defect masks)
-        
-        maximum_pd = max([ int(mask_filename.split('_')[2]) for mask_filename in os.listdir(os.path.join(PATH_MASK, defect_folder)) if '_PD_' in mask_filename])
+        maximum_pd = max([ int(mask_filename.split('_')[2].split('.')[0]) for mask_filename in os.listdir(os.path.join(PATH_MASK, defect_folder)) if '_PD_' in mask_filename])
         
         # for each mask apply the resulting mask and color transfer
         for i_acdm, mask_filename_comb in enumerate(all_current_defect_masks):
@@ -53,7 +69,7 @@ def main():
             
             if len(mask_filename_comb) == 1: 
                 mask_path = os.path.join(PATH_MASK, mask_filename_comb[0])
-                current_pd = int(mask_filename_comb[0].split('_')[2])
+                current_pd = int(mask_filename_comb[0].split('_')[2].split('.')[0])
                 mask = Image.open(mask_path).convert("L")                     
             else:
                 mask_paths = [os.path.join(PATH_MASK, mask_filename_comb[i_mfc]) for i_mfc in range(len(mask_filename_comb))] 
@@ -72,7 +88,7 @@ def main():
             manipulated_defects = apply_color_transfer(defect, mask)
             
             for i_md, md in enumerate(manipulated_defects):
-                md.save(os.path.join(PATH_DEFECTS, defect_folder ,f'{defect_folder}_CT_{current_pd if current_pd > 0 else i_acdm + maximum_pd + 1}_{i_md}.jpg'))
+                md.save(os.path.join(PATH_DEFECTS, defect_folder ,f'{defect_folder}_CT_{current_pd if current_pd >= 0 else i_acdm + maximum_pd + 1}_{i_md}.jpg'))
                 
         print(f'{i_df+1}/{len(defect_folders)}', end='\r')
         
@@ -80,6 +96,5 @@ def main():
     
 
 if __name__ == "__main__":
-    os.makedirs(PATH_MASK_COMBINATIONS, exist_ok=True)
     delete_old_files()
-    #main()
+    # main()
