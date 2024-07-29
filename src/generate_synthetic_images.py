@@ -125,4 +125,4 @@ def main():
 if __name__ == '__main__':
     os.makedirs(PATH_TO_SYNTHETIC,exist_ok=True)
     delete_old_files()
-    main()
+    # main()
