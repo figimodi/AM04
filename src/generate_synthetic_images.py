@@ -40,9 +40,9 @@ def get_pos_topleft(image):
 
 def main():
     
-    masks_filenames = [f for f in os.listdir(PATH_TO_MASKS) if f.endswith('.jpg')]
+    masks_paths = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if mask_filename.endswith('.jpg') and '_L_' not in mask_filename and '_Mask_' not in mask_filename]
     nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg')]
-    defect_types = list(set([f.split('_')[2].split('.')[0] for f in masks_filenames]))
+    defect_types = list(set([f.split('_')[3].split('.')[0] for f in masks_paths]))
     
     ## paramaters
     
@@ -56,7 +56,7 @@ def main():
     # probability_flip = .5
     choose_how_many_defects = lambda: few() if random.random() < probability_few_defects else many()
     choose_defect_type = lambda: random.choice(defect_types)
-    get_defect_mask_filename_by_type = lambda chosen_type: random.choice([f for f in masks_filenames if chosen_type in f])
+    get_defect_mask_filename_by_type = lambda chosen_type: random.choice([f for f in masks_paths if chosen_type in f])
     
     print('Generating synthetic images...')
     
@@ -125,4 +125,4 @@ def main():
 if __name__ == '__main__':
     os.makedirs(PATH_TO_SYNTHETIC,exist_ok=True)
     delete_old_files()
-    # main()
+    main()
