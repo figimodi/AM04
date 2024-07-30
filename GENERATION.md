@@ -29,6 +29,8 @@
 
 ## Generation of synthetic defects
 #### pyton .\src\generate_synthetic_images.py 
+##### Parameters 
+samples_number_per_defect = 10 (set to higher values)  
 1. Synthethic defects are stored inside **/data/SynthethicDefects**   
     **Example**:  
     Image1_Vertical_8.jpg  
