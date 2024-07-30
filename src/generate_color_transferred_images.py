@@ -28,7 +28,7 @@ def delete_old_files():
     
 def main():
     #No laser, no whole mask
-    masks_filenames = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_MASK) if os.path.isdir(os.path.join(PATH_MASK, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_MASK, mask_folder)) if mask_filename.endswith('.jpg') and '_L_' not in mask_filename and '_Mask_' not in mask_filename]
+    masks_filenames = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_MASK) if os.path.isdir(os.path.join(PATH_MASK, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_MASK, mask_folder)) if mask_filename.endswith('.jpg') and '_PD_' in mask_filename ]
     defect_folders = [ defect_folder for defect_folder in os.listdir(PATH_DEFECTS) if os.path.isdir(os.path.join(PATH_DEFECTS, defect_folder))]
     
     # print(masks_filenames)
@@ -97,4 +97,4 @@ def main():
 
 if __name__ == "__main__":
     delete_old_files()
-    # main()
+    main()
