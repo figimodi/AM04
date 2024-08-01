@@ -5,6 +5,7 @@ from typing import List, Optional, Union
     
 class DatasetConfig(BaseModel):
     defects_folder: Path
+    defects_masks_folder: Path
     splits: List[float]
 
 class ResNetDatasetConfig(DatasetConfig):

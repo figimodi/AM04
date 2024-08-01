@@ -15,7 +15,7 @@ if __name__ == '__main__':
     config, device = parser.parse_args()
 
     # Load sources
-    harmonization_dataset = HarmonizationDataset(defects_folder=config.dataset.defects_folder)
+    harmonization_dataset = HarmonizationDataset(defects_folder=config.dataset.defects_folder, defects_masks_folder=config.dataset.defects_masks_folder)
 
     # Create train-val-test splits
     splits = harmonization_dataset.create_splits(config.dataset.splits)

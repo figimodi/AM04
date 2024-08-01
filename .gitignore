@@ -8,4 +8,6 @@ log/
 # VsCode
 .vscode
 
-.pdn
+# mask generation
+PDNPic/
+*.pdn

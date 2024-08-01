@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
-from models import TSAIEncoder, TSAIDecoder
+from models import TSAINetwork
 
 
 class HarmonizationModule(LightningModule):
@@ -19,8 +19,7 @@ class HarmonizationModule(LightningModule):
         self.save_hyperparameters()
 
         # Network
-        self.encoder = TSAIEncoder()
-        self.decoder = TSAIDecoder()
+        self.net = TSAINetwork()
 
         # Training params
         self.epochs = epochs
@@ -32,8 +31,7 @@ class HarmonizationModule(LightningModule):
         self.test_outputs = []
 
     def forward(self, x):
-        l = self.encoder(x)
-        y = self.decoder(l)
+        y = self.net(x)
         return y
 
     def loss_function(self, y, original_image):
@@ -41,31 +39,28 @@ class HarmonizationModule(LightningModule):
 
     def training_step(self, batch):
         original_image, fake_image = batch
-        l = self.encoder(fake_image)
-        y = self.decoder(l)
+        y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
         self.log('train_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def validation_step(self, batch):
         original_image, fake_image = batch
-        l = self.encoder(fake_image)
-        y = self.decoder(l)
+        y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
         self.log('val_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def test_step(self, batch):
         original_image, fake_image = batch
-        l = self.encoder(fake_image)
-        y = self.decoder(l)
-        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image)))
+        y = self.net(fake_image)
+        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image)))
         return None
 
     def on_test_epoch_end(self):
-        for i, (y, original_image) in enumerate(self.test_outputs):
+        for i, (y, original_image, fake_image) in enumerate(self.test_outputs[:10]):
             for sample in range(y.shape[0]):
-                fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+                fig, axes = plt.subplots(1, 3, figsize=(12, 6))
 
                 # Display the artifact image (assuming y is in [batch_size, 3, height, width] format)
                 im1 = axes[0].imshow(y[sample].permute(1, 2, 0).cpu().numpy())
@@ -74,6 +69,9 @@ class HarmonizationModule(LightningModule):
                 # Display the original image (assuming original_image is in [batch_size, 3, height, width] format)
                 im2 = axes[1].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy())
                 axes[1].set_title('Original Image')
+                
+                im3 = axes[2].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy())
+                axes[2].set_title('Fake Image')
 
                 plt.suptitle(f'Comparison {i+1}_{sample+1}')
 
@@ -90,7 +88,7 @@ class HarmonizationModule(LightningModule):
 
                 plt.close(fig)
 
-        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image in self.test_outputs]).mean()
+        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _ in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
