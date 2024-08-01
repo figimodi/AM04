@@ -82,15 +82,3 @@ if __name__ == '__main__':
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)
-
-    # Log into yaml file the config
-    with open(os.path.join(config.logger.log_dir, config.logger.experiment_name, f'version_{config.logger.version}', 'hparams.yaml'), 'w') as yaml_file:
-        hparams = {
-            'resnet_type': config.model.resnet_type,
-            'epochs': config.model.epochs,
-            'batch_size': config.model.batch_size,
-            'learning_rate': config.model.learning_rate,
-            'optimizer': config.model.optimizer,
-            'scheduler': config.model.scheduler,
-        }
-        yaml.dump(hparams, yaml_file)

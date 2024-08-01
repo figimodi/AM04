@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Tuple
 from PIL import Image
 
+
 class HarmonizationDatasetSplit(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.data = data
