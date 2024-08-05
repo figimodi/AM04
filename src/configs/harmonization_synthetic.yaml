@@ -1,6 +1,6 @@
 dataset:
-  defects_folder: ./../data/Defects/
-  defects_masks_folder: ./../data/DefectsMasks/
+  defects_folder: ./../data/SyntheticDefects/
+  defects_masks_folder: ./../data/SyntheticDefectsMasks/
   splits: [.5, .25, .25]
 model:
   epochs: 5
