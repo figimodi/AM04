@@ -18,6 +18,7 @@ class ModelConfig(BaseModel):
     learning_rate: float
     optimizer: str
     scheduler: str
+    save_images: Path
     only_test: bool
     pretrained: Optional[Path] = None
 

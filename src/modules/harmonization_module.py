@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
+from torchvision.utils import save_image
+from pathlib import Path
 from typing import Tuple
 from pydantic import BaseModel
 from models import TSAINetwork
@@ -14,6 +16,7 @@ class HarmonizationModule(LightningModule):
             lr: float, 
             optimizer: str, 
             scheduler: str, 
+            save_images: Path,
         ):
         super().__init__()
         self.save_hyperparameters()
@@ -27,6 +30,9 @@ class HarmonizationModule(LightningModule):
         self.optimizer = optimizer
         self.scheduler = scheduler
 
+        # Additional params
+        self.save_images = save_images
+
         # Test outputs
         self.test_outputs = []
 
@@ -38,23 +44,29 @@ class HarmonizationModule(LightningModule):
         return torch.nn.functional.mse_loss(y, original_image)
 
     def training_step(self, batch):
-        original_image, fake_image = batch
+        original_image, fake_image, defect_type = batch
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
         self.log('train_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def validation_step(self, batch):
-        original_image, fake_image = batch
+        original_image, fake_image, defect_type = batch
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
         self.log('val_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def test_step(self, batch):
-        original_image, fake_image = batch
+        original_image, fake_image, defect_type = batch
         y = self.net(fake_image)
         self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image)))
+
+        if self.save_images:
+            # Save each image in the batch
+            for i in range(y.shape[0]):
+                save_image(y[i], os.path.join(self.save_images, f'image_{batch_idx}_{i}_{defect_type}.png'))
+
         return None
 
     def on_test_epoch_end(self):

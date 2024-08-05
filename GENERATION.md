@@ -1,5 +1,5 @@
 ## Generation of color manipulated defects
-#### python .\src\generate_color_transferred_images.py
+`python .\src\generate_color_transferred_images.py`
 1. Color manipulated defects are stored inside **/data/Defects**   
     **Example**:  
     Image0_CT_0_0.jpg  
@@ -28,7 +28,7 @@
     PK(DefectImageName, ID)  
 
 ## Generation of synthetic defects
-#### pyton .\src\generate_synthetic_images.py 
+`python .\src\generate_synthetic_images.py`
 ##### Parameters 
 samples_number_per_defect = 10 (set to higher values)  
 1. Synthethic defects are stored inside **/data/SynthethicDefects**   

@@ -8,6 +8,7 @@ model:
   learning_rate: 1e-4
   optimizer: adam
   scheduler: none
+  save_images: ./../data/SyntheticDefectsHarmonized/
   only_test: False
 logger:
   log_dir: ./log
