@@ -93,29 +93,30 @@ class HarmonizationDataset(Dataset):
         splits = list()
         start_idx = 0
         for size in split_sizes:
-            splits.append(HarmonizationDatasetSplit(df.iloc[start_idx:start_idx + size]))
-            start_idx += size
+            if size == 0:
+                splits.append(HarmonizationDatasetSplit(df.iloc[0]))
+            else:
+                splits.append(HarmonizationDatasetSplit(df.iloc[start_idx:start_idx + size]))
+                start_idx += size
     
         return tuple(splits)    
 
 
 class HarmonizationDatasetSynthetic(HarmonizationDataset):
-    def __init__(self, synthetic_defects_folder: Path, synthetic_defects_masks_folder: Path):
-        super(self, HarmonizationDataset).__init__()
+    def __init__(self, defects_folder: Path, defects_masks_folder: Path):
+        super(HarmonizationDatasetSynthetic, self).__init__(defects_folder, defects_masks_folder)
 
-    def __load__(self, synthetic_defects_folder: Path, synthetic_defects_masks_folder: Path) -> pd.DataFrame:
+    def __load__(self, defects_folder: Path, defects_masks_folder: Path) -> pd.DataFrame:
         data = list()
 
-        for image in os.listdir(synthetic_defects_folder):
-            image_path = os.path.join(synthetic_defects_folder, image)
-            
-            image_mask = image.split('.')[-1] = f"_mask{image.split('.')[-1]}"
-            image_mask_path = os.path.join(synthetic_defects_masks_folder, image_mask)
-
-                
+        for image in os.listdir(defects_folder):
+            image_path = os.path.join(defects_folder, image) 
+            image_mask = os.path.basename(image_path).replace('.jpg', '_mask.jpg')
+            image_mask_path = os.path.join(defects_masks_folder, image_mask)
             data.append({
-                    'image': image_path,
-                    'mask': image_mask_path
+                    'original_image': image_path,
+                    'fake_image': image_path,
+                    'mask_image': image_mask_path
                 }
             )
 

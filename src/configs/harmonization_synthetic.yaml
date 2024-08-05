@@ -1,7 +1,7 @@
 dataset:
   defects_folder: ./../data/SyntheticDefects/
   defects_masks_folder: ./../data/SyntheticDefectsMasks/
-  splits: [.5, .25, .25]
+  splits: [0, 0, 1]
 model:
   epochs: 5
   batch_size: 4
@@ -12,7 +12,7 @@ model:
   only_test: False
 logger:
   log_dir: ./log
-  experiment_name: train_harmonization
+  experiment_name: harmonize_synthetic_images
   version: 1
 checkpoint:
   monitor: val_loss

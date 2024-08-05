@@ -1,4 +1,5 @@
 import torch
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
@@ -60,18 +61,17 @@ class HarmonizationModule(LightningModule):
     def test_step(self, batch):
         original_image, fake_image, defect_type = batch
         y = self.net(fake_image)
-        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image)))
-
-        if self.save_images:
-            # Save each image in the batch
-            for i in range(y.shape[0]):
-                save_image(y[i], os.path.join(self.save_images, f'image_{batch_idx}_{i}_{defect_type}.png'))
-
+        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image), defect_type))
         return None
 
     def on_test_epoch_end(self):
-        for i, (y, original_image, fake_image) in enumerate(self.test_outputs[:10]):
-            for sample in range(y.shape[0]):
+        for i, (y, original_image, fake_image, defect_type) in enumerate(self.test_outputs):
+            if self.save_images:
+                # Save each image in the batch
+                for z in range(y.shape[0]):
+                    save_image(y[z], os.path.join(self.save_images, f'image_{i}_{z}_{defect_type[z]}.png'))
+            
+            for sample in range(min(y.shape[0], 10)):
                 fig, axes = plt.subplots(1, 3, figsize=(12, 6))
 
                 # Display the artifact image (assuming y is in [batch_size, 3, height, width] format)
@@ -100,7 +100,7 @@ class HarmonizationModule(LightningModule):
 
                 plt.close(fig)
 
-        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _ in self.test_outputs]).mean()
+        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _, _ in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
