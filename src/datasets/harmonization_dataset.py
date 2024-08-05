@@ -9,6 +9,7 @@ from PIL import Image
 import torch
 from collections import defaultdict
 
+
 class HarmonizationDatasetSplit(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.data = data

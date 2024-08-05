@@ -25,6 +25,7 @@ class ResNetModule(LightningModule):
             scheduler: str, 
         ):
         super().__init__()
+        self.save_hyperparameters()
 
         # Network
         self.model = resnet_architectures[resnet_type]()

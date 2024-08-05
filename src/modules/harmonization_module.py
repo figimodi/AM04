@@ -16,6 +16,7 @@ class HarmonizationModule(LightningModule):
             scheduler: str, 
         ):
         super().__init__()
+        self.save_hyperparameters()
 
         # Network
         self.net = TSAINetwork()
