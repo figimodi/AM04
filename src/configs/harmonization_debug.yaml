@@ -1,5 +1,6 @@
 dataset:
   defects_folder: C:\Users\grfil\Documents\GitHub\AM04\data\Defects
+  defects_masks_folder: C:\Users\grfil\Documents\GitHub\AM04\data\DefectsMasks
   splits: [.5, .25, .25]
 model:
   epochs: 1
@@ -7,11 +8,10 @@ model:
   learning_rate: 1e-4
   optimizer: adam
   scheduler: none
-  save_images: none
   only_test: False
 logger:
   log_dir: C:\Users\grfil\Documents\GitHub\AM04\src\log
-  experiment_name: train_harmonization
+  experiment_name: train_harmonization_debug
   version: 1
 checkpoint:
   monitor: val_loss

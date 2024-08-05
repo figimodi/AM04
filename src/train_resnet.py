@@ -15,9 +15,7 @@ if __name__ == '__main__':
 
     # Load sources
     classifier_dataset = ClassifierDataset(
-        defects_folder=config.dataset.defects_folder, 
-        no_defects_folder=config.dataset.no_defects_folder,
-        # synthetized_defects_folder=config.dataset.synthetized_defects_folder,
+        synthetized_defects_folder=config.dataset.synthetized_defects_folder,
     )
 
     # Create train-val-test splits
@@ -56,7 +54,7 @@ if __name__ == '__main__':
     checkpoint_cb = ModelCheckpoint(
         monitor=config.checkpoint.monitor,
         dirpath=os.path.join(config.logger.log_dir, config.logger.experiment_name, f'version_{config.logger.version}'),
-        filename='epoch={epoch:03d}_loss={config.checkpoint.monitor:.4f}',
+        filename='{epoch:03d}_{' + config.checkpoint.monitor + ':.6f}',
         save_weights_only=True,
         save_top_k=config.checkpoint.save_top_k,
         mode=config.checkpoint.mode,

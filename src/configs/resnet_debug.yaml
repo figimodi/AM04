@@ -1,7 +1,5 @@
 dataset:
-  defects_folder: C:\Users\grfil\Documents\GitHub\AM04\data\Defects
-  no_defects_folder: C:\Users\grfil\Documents\GitHub\AM04\data\NoDefects
-  synthetized_defects_folder: C:\Users\grfil\Documents\GitHub\AM04\data\Synthetic
+  synthetized_defects_folder: C:\Users\grfil\Documents\GitHub\AM04\data\SyntheticDefectsHarmonized
   splits: [.5, .25, .25]
 model:
   resnet_type: resnet50
@@ -13,7 +11,7 @@ model:
   only_test: False
 logger:
   log_dir: C:\Users\grfil\Documents\GitHub\AM04\src\log
-  experiment_name: train_resnet
+  experiment_name: train_resnet_debug
   version: 1
 checkpoint:
   monitor: val_loss

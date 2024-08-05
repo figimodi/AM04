@@ -17,7 +17,7 @@ class HarmonizationModule(LightningModule):
             lr: float, 
             optimizer: str, 
             scheduler: str, 
-            save_images: Path,
+            save_images: Path = None,
         ):
         super().__init__()
         self.save_hyperparameters()

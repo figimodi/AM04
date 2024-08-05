@@ -5,7 +5,15 @@ from torchvision import transforms
 from pathlib import Path
 from typing import List, Tuple
 from PIL import Image
+from enum import Enum
 
+
+class Defect(Enum):
+    HOLE = 0
+    VERTICAL = 1
+    INCANDESCENCE = 2
+    SPATTERING = 3
+    HORIZONTAL = 4
 
 class ClassifierDatasetSplit(Dataset):
     def __init__(self, data: pd.DataFrame):
@@ -27,65 +35,29 @@ class ClassifierDatasetSplit(Dataset):
             yield sample
 
 class ClassifierDataset(Dataset):
-    def __init__(self, no_defects_folder: Path, defects_folder: Path, synthetized_defects_folder: Path = None):
+    def __init__(self, synthetized_defects_folder):
         super().__init__()
-        self.data = self.__load__(no_defects_folder, defects_folder, synthetized_defects_folder)
+        self.data = self.__load__(synthetized_defects_folder)
 
     def __len__(self):
         return len(self.data)
 
-    def __load__(self, no_defects_folder: Path, defects_folder: Path, synthetized_defects_folder: Path = None) -> None:
+    def __load__(self, synthetized_defects_folder) -> None:
         data = list()
-        no_defect_images = list()
-        defect_images = list()
         synthetized_defect_images = list()
-
-        # Load no defect images paths
-        no_defect_images = [os.path.join(no_defects_folder, image) 
-                            for image in os.listdir(no_defects_folder) 
-                            if os.path.isfile(os.path.join(no_defects_folder, image))]
-        
-
-        # Load defect images paths
-        defect_images_folders = [os.path.join(defects_folder, folder) 
-                                for folder in os.listdir(defects_folder) 
-                                if os.path.isdir(os.path.join(defects_folder, folder))]
-        for folder in defect_images_folders:
-            images = os.listdir(folder)
-            defect_image = min(images, key=len)
-            defect_images.append(os.path.join(folder, defect_image))
-
         
         # Load synthetized defect images paths
-        if synthetized_defects_folder:
-            synthetized_defect_images =[os.path.join(synthetized_defects_folder, image) 
-                                        for image in os.listdir(synthetized_defects_folder) 
-                                        if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
+        synthetized_defect_images =[os.path.join(synthetized_defects_folder, image) 
+                                    for image in os.listdir(synthetized_defects_folder) 
+                                    if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
 
-        for image_path in no_defect_images:
+        for image_path in synthetized_defect_images:
             data.append(
                 {
                     'image_path': image_path,
-                    'label': 0,
+                    'label': Defect[os.path.splitext(image_path)[0].split('_')[-1].upper()].value,
                 }
             )
-
-        for image_path in defect_images:
-            data.append(
-                {
-                    'image_path': image_path,
-                    'label': 1,
-                }
-            )
-
-        if synthetized_defects_folder:
-            for image_path in synthetized_defect_images:
-                data.append(
-                    {
-                        'image_path': image_path,
-                        'label': 1,
-                    }
-                )
 
         return pd.DataFrame(data)
 
