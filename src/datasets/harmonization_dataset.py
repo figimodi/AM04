@@ -1,4 +1,5 @@
 import os
+import pprint
 import pandas as pd
 from torch.utils.data import Dataset
 from torchvision import transforms
@@ -42,10 +43,13 @@ class HarmonizationDataset(Dataset):
         
         # Create the dictionary with the paths of masks {"ImageX" : [mask_path_K,...]}
         defect_masks = defaultdict(list)
-        # Append the normal defect masks
-        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img)) for img in os.listdir(defects_masks_folder) if img.endswith(".jpg")]
-        # Append the combined defect masks
-        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, "combinations", img)) for img in os.listdir(os.path.join(defects_masks_folder, "combinations")) if img.endswith(".jpg")]
+        # Append defect masks
+        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img_name, img)) for img_name in os.listdir(defects_masks_folder) for img in os.listdir(os.path.join(defects_masks_folder, img_name)) if img.endswith(".jpg") and '_L_' not in img ]
+
+        for img_name in defect_masks.keys():
+            defect_masks[img_name].sort(key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0]))
+
+        pprint.pprint(defect_masks)
 
         for image_name in os.listdir(defects_folder):
             image_folder_path = os.path.join(defects_folder, image_name)
@@ -62,14 +66,19 @@ class HarmonizationDataset(Dataset):
                 # Associate each fake image with its corresponding mask
                 for fake_image in images:
                     img_metadata = fake_image.split("_")
+                    img_metadata[-1] = img_metadata[-1].split('.')[0] #remove file extension
+                    
                     img_name = img_metadata[0]
-                    img_mask = int(img_metadata[2])
+                    img_mask_id = int(img_metadata[2])
+                    
+                    if img_mask_id >= len(defect_masks[img_name]):
+                        print(img_metadata)
                     
                     data.append(
                         {
                             'original_image': original_image_path,
                             'fake_image': os.path.join(image_folder_path, fake_image),
-                            'mask_image': defect_masks[img_name][img_mask]
+                            'mask_image': defect_masks[img_name][img_mask_id]
                         }
                     )
 
