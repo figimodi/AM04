@@ -111,10 +111,12 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
                     y_end = y_start + proto_cropped_mask.shape[0]
                     
                     test_mask[y_start:y_end, x_start:x_end] = proto_cropped_mask
+                    test_mask = np.where(test_mask > 100, 255, 0)
                     
                     if not np.any(test_mask*current_mask) or def_i==0:
                         keep_trying = False
-                        current_mask = np.logical_or(current_mask, test_mask) * 255
+                        current_mask = np.logical_or(current_mask, test_mask).astype(np.uint8) * 255
+                        current_mask = np.where(current_mask > 100, 255, 0)
                         
                     count_tryies+=1
                 

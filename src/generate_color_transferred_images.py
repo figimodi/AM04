@@ -59,6 +59,9 @@ def main():
                 
         if len(current_defect_masks) > 1 and os.path.isfile(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_Mask_0.jpg')):
             all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_0.jpg')])
+        else:
+            all_current_defect_masks = []
+            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_0.jpg')])
         
         # for each mask apply the resulting mask and color transfer
         for i_acdm, mask_filename_comb in enumerate(all_current_defect_masks):
@@ -73,8 +76,9 @@ def main():
                 mask_paths = [os.path.join(PATH_MASK, mask_filename_comb[i_mfc]) for i_mfc in range(len(mask_filename_comb))] 
                 masks = [np.array(Image.open(mask_paths[i_mp]).convert("L")) for i_mp in range(len(mask_paths))]
                 final_mask = masks[0]
+                final_mask = np.where(final_mask > 100, 255, 0)
                 for i_m in range(1, len(masks)):
-                    final_mask = np.where(masks[i_m] > 0, 255, final_mask)
+                    final_mask = np.where(masks[i_m] > 100, 255, final_mask)
                 mask = Image.fromarray(final_mask).convert("L")
                 
                 mask.save(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_CB_{i_acdm+1}.jpg'))

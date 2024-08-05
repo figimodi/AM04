@@ -108,7 +108,8 @@ class HarmonizationDatasetSynthetic(HarmonizationDataset):
         for image in os.listdir(synthetic_defects_folder):
             image_path = os.path.join(synthetic_defects_folder, image)
             
-            image_mask = image.split('.')[-1] = f"_mask{image.split('.')[-1]}"
+            image_mask = os.path.basename(image_path).replace('.jpg', '_mask.jpg')
+            
             image_mask_path = os.path.join(synthetic_defects_masks_folder, image_mask)
 
                 
