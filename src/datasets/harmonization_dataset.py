@@ -109,10 +109,14 @@ class HarmonizationDatasetSynthetic(HarmonizationDataset):
     def __load__(self, defects_folder: Path, defects_masks_folder: Path) -> pd.DataFrame:
         data = list()
 
-        for image in os.listdir(defects_folder):
-            image_path = os.path.join(defects_folder, image) 
+        for image in os.listdir(synthetic_defects_folder):
+            image_path = os.path.join(synthetic_defects_folder, image)
+            
             image_mask = os.path.basename(image_path).replace('.jpg', '_mask.jpg')
-            image_mask_path = os.path.join(defects_masks_folder, image_mask)
+            
+            image_mask_path = os.path.join(synthetic_defects_masks_folder, image_mask)
+
+                
             data.append({
                     'original_image': image_path,
                     'fake_image': image_path,
