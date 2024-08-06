@@ -12,8 +12,8 @@ class ResNet18(ResNet):
         pretrained_model = models.resnet18(pretrained=True)
         self.load_state_dict(pretrained_model.state_dict())
 
-        # Replace the final fully connected layer with one that has `num_classes=2` outputs
-        self.fc = nn.Linear(self.fc.in_features, 2)
+        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        self.fc = nn.Linear(self.fc.in_features, 5)
 
 class ResNet34(ResNet):
     def __init__(self):
@@ -24,8 +24,8 @@ class ResNet34(ResNet):
         pretrained_model = models.resnet34(pretrained=True)
         self.load_state_dict(pretrained_model.state_dict())
 
-        # Replace the final fully connected layer with one that has `num_classes=2` outputs
-        self.fc = nn.Linear(self.fc.in_features, 2)
+        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        self.fc = nn.Linear(self.fc.in_features, 5)
 
 class ResNet50(ResNet):
     def __init__(self,):
@@ -36,8 +36,8 @@ class ResNet50(ResNet):
         pretrained_model = models.resnet50(pretrained=True)
         self.load_state_dict(pretrained_model.state_dict())
 
-        # Replace the final fully connected layer with one that has `num_classes=2` outputs
-        self.fc = nn.Linear(self.fc.in_features, 2)
+        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        self.fc = nn.Linear(self.fc.in_features, 5)
 
 class ResNet101(ResNet):
     def __init__(self):
@@ -48,8 +48,8 @@ class ResNet101(ResNet):
         pretrained_model = models.resnet101(pretrained=True)
         self.load_state_dict(pretrained_model.state_dict())
 
-        # Replace the final fully connected layer with one that has `num_classes=2` outputs
-        self.fc = nn.Linear(self.fc.in_features, 2)
+        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        self.fc = nn.Linear(self.fc.in_features, 5)
 
 class ResNet152(ResNet):
     def __init__(self):
@@ -60,6 +60,6 @@ class ResNet152(ResNet):
         pretrained_model = models.resnet152(pretrained=True)
         self.load_state_dict(pretrained_model.state_dict())
 
-        # Replace the final fully connected layer with one that has `num_classes=2` outputs
-        self.fc = nn.Linear(self.fc.in_features, 2)
+        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        self.fc = nn.Linear(self.fc.in_features, 5)
 

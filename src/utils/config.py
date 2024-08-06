@@ -8,9 +8,9 @@ class DatasetConfig(BaseModel):
     defects_masks_folder: Path
     splits: List[float]
 
-class ResNetDatasetConfig(DatasetConfig):
-    no_defects_folder: Path
+class ResNetDatasetConfig(BaseModel):
     synthetized_defects_folder: Optional[Path]
+    splits: List[float]
 
 class ModelConfig(BaseModel):
     epochs: int
@@ -18,8 +18,8 @@ class ModelConfig(BaseModel):
     learning_rate: float
     optimizer: str
     scheduler: str
-    save_images: Path
     only_test: bool
+    save_images: Optional[Path] = None
     pretrained: Optional[Path] = None
 
 class ResNetConfig(ModelConfig):
