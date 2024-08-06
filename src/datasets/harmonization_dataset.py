@@ -45,7 +45,7 @@ class HarmonizationDataset(Dataset):
         # Create the dictionary with the paths of masks {"ImageX" : [mask_path_K,...]}
         defect_masks = defaultdict(list)
         # Append defect masks
-        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img_name, img)) for img_name in os.listdir(defects_masks_folder) for img in os.listdir(os.path.join(defects_masks_folder, img_name)) if img.endswith(".jpg") and '_L_' not in img ]
+        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img_name, img)) for img_name in os.listdir(defects_masks_folder) for img in os.listdir(os.path.join(defects_masks_folder, img_name)) if (img.endswith(".jpg") or img.endswith(".png")) and '_L_' not in img ]
 
         for img_name in defect_masks.keys():
             defect_masks[img_name].sort(key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0]))
@@ -112,7 +112,9 @@ class HarmonizationDatasetSynthetic(HarmonizationDataset):
         for image in os.listdir(defects_folder):
             image_path = os.path.join(defects_folder, image)
             
-            image_mask = os.path.basename(image_path).replace('.jpg', '_mask.jpg')
+            #extension = os.path.basename(image_path).split(".")[1]
+            
+            image_mask = os.path.basename(image_path).replace(f'.jpg', f'_mask.png')
             
             image_mask_path = os.path.join(defects_masks_folder, image_mask)
 

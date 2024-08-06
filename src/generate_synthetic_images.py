@@ -9,6 +9,7 @@ PATH_TO_DEFECTS = os.path.join(ROOT_DIR, 'data', 'Defects')
 PATH_TO_NODEFECTS = os.path.join(ROOT_DIR, 'data', 'NoDefects')
 PATH_TO_SYNTHETIC = os.path.join(ROOT_DIR, 'data', 'SyntheticDefects')
 PATH_TO_SYNTHETIC_MASKS = os.path.join(ROOT_DIR, 'data', 'SyntheticDefectsMasks')
+PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED = os.path.join(ROOT_DIR, 'data', 'SyntheticDefectsHarmonized')
 
 #borders of the frame. X and Y coordinates (origin is TOP LEFT). Taken using paint (while moving the cursor gives x and y coordinates)
 FRAME_BORDERS = {
@@ -45,8 +46,8 @@ def get_pos_topleft(image):
 
 def main(samples_number_per_defect = 10, probability_few_defects = .8):
     # probability of having few defects against having many defects (few and many defined next)
-    masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if mask_filename.endswith('.jpg') and '_PD_' in mask_filename ]
-    nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg')]
+    masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename ]
+    nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg') or f.endswith('.png')]
     defect_types = list(set([f.split('_')[3].split('.')[0] for f in masks_paths]))
 
     few = lambda: random.choice([1,2,3])
@@ -54,7 +55,7 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
 
     choose_how_many_defects = lambda: few() if random.random() < probability_few_defects else many()
     # choose_defect_type = lambda: random.choice(defect_types)
-    get_defect_mask_path_by_type = lambda chosen_type: random.choice([p for p in masks_paths if p.endswith('.jpg') and p.split('_')[-1].split('.')[0] == chosen_type])
+    get_defect_mask_path_by_type = lambda chosen_type: random.choice([p for p in masks_paths if (p.endswith('.jpg') or p.endswith('.png')) and p.split('_')[-1].split('.')[0] == chosen_type])
     
     print('Generating synthetic images...')
     
@@ -111,12 +112,12 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
                     y_end = y_start + proto_cropped_mask.shape[0]
                     
                     test_mask[y_start:y_end, x_start:x_end] = proto_cropped_mask
-                    test_mask = np.where(test_mask > 100, 255, 0)
                     
                     if not np.any(test_mask*current_mask) or def_i==0:
                         keep_trying = False
+                        current_mask = (current_mask > 127).astype(np.uint8) * 255
+                        test_mask = (test_mask > 127).astype(np.uint8) * 255
                         current_mask = np.logical_or(current_mask, test_mask).astype(np.uint8) * 255
-                        current_mask = np.where(current_mask > 100, 255, 0)
                         
                     count_tryies+=1
                 
@@ -125,7 +126,7 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
                 
             # save
             nodefect_image_current.save(os.path.join(PATH_TO_SYNTHETIC, f'{nodefect_name}_{chosen_defect_type}_{i_sndp}.jpg'))
-            Image.fromarray(current_mask).convert('RGB').save(os.path.join(PATH_TO_SYNTHETIC_MASKS, f'{nodefect_name}_{chosen_defect_type}_{i_sndp}_mask.jpg'))   
+            Image.fromarray(current_mask).convert('L').save(os.path.join(PATH_TO_SYNTHETIC_MASKS, f'{nodefect_name}_{chosen_defect_type}_{i_sndp}_mask.png'))   
             print(f'{i_sndp + i_dt*samples_number_per_defect + 1}/{samples_number_per_defect*len(defect_types)}', end='\r')
             
     print('Done!')
@@ -133,5 +134,6 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
 if __name__ == '__main__':
     os.makedirs(PATH_TO_SYNTHETIC, exist_ok=True)
     os.makedirs(PATH_TO_SYNTHETIC_MASKS, exist_ok=True)
+    os.makedirs(PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED, exist_ok=True)
     delete_old_files()
     main()
