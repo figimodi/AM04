@@ -36,7 +36,7 @@ class CheckpointConfig(BaseModel):
     mode: str
 
 class Config(BaseModel):
-    dataset: Union[ResNetDatasetConfig, DatasetConfig]
+    dataset: Union[DatasetConfig, DatasetConfig]
     model: Union[ResNetConfig, ModelConfig]
     logger: LoggerConfig
     checkpoint: CheckpointConfig
