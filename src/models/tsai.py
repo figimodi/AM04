@@ -4,9 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class TSAINetwork(torch.nn.Module):
+class TSAINetworkV1(torch.nn.Module):
     def __init__(self):
-        super(TSAINetwork, self).__init__()
+        super(TSAINetworkV1, self).__init__()
         self.conv1 = torch.nn.Conv2d(2, 64, kernel_size=4, padding=1, stride=2)
         self.conv2 = torch.nn.Conv2d(64, 64, kernel_size=4, padding=1, stride=2)
         self.conv3 = torch.nn.Conv2d(64, 128, kernel_size=4, padding=1, stride=2)
@@ -70,10 +70,10 @@ class ScaleLayer(nn.Module):
     def forward(self, input):
         return input * self.scale
 
-class NewTSAINetwork(nn.Module):
+class TSAINetworkV2(nn.Module):
 
     def __init__(self):
-        super(NewTSAINetwork, self).__init__()
+        super(TSAINetworkV2, self).__init__()
         
         # Encoder
         self.conv0 = nn.Conv2d(2, 64, kernel_size=4, stride=2, padding=1)

@@ -7,12 +7,12 @@ from torchvision.utils import save_image
 from pathlib import Path
 from typing import Tuple
 from pydantic import BaseModel
-from models import TSAINetwork, NewTSAINetwork
+from models import TSAINetworkV1, TSAINetworkV2
 
 
 class HarmonizationModule(LightningModule):
     def __init__(
-            self, 
+            self,
             epochs: int,
             lr: float, 
             optimizer: str, 
@@ -23,7 +23,7 @@ class HarmonizationModule(LightningModule):
         self.save_hyperparameters()
 
         # Network
-        self.net = TSAINetwork()
+        self.net = TSAINetworkV1()
 
         # Training params
         self.epochs = epochs

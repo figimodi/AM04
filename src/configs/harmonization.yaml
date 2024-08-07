@@ -5,7 +5,7 @@ dataset:
 model:
   epochs: 50
   batch_size: 4
-  learning_rate: 1e-4
+  learning_rate: 1e-7
   optimizer: adam
   scheduler: plateau
   only_test: False
