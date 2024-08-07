@@ -53,7 +53,7 @@ if __name__ == '__main__':
     checkpoint_cb = ModelCheckpoint(
         monitor=config.checkpoint.monitor,
         dirpath=os.path.join(config.logger.log_dir, config.logger.experiment_name, f'version_{config.logger.version}'),
-        filename='{epoch:03d}_{' + config.checkpoint.monitor + ':.6f}',
+        filename='{epoch:03d}_{' + config.checkpoint.monitor + ':.8f}',
         save_weights_only=True,
         save_top_k=config.checkpoint.save_top_k,
         mode=config.checkpoint.mode,

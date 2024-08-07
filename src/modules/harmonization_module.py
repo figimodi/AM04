@@ -7,7 +7,7 @@ from torchvision.utils import save_image
 from pathlib import Path
 from typing import Tuple
 from pydantic import BaseModel
-from models import NewTSAINetwork
+from models import TSAINetwork, NewTSAINetwork
 
 
 class HarmonizationModule(LightningModule):
@@ -23,7 +23,7 @@ class HarmonizationModule(LightningModule):
         self.save_hyperparameters()
 
         # Network
-        self.net = NewTSAINetwork()
+        self.net = TSAINetwork()
 
         # Training params
         self.epochs = epochs
@@ -46,16 +46,18 @@ class HarmonizationModule(LightningModule):
 
     def training_step(self, batch):
         original_image, fake_image, defect_type = batch
+        batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
-        self.log('train_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('train_loss', loss.item(), batch_size=batch_size, logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def validation_step(self, batch):
         original_image, fake_image, defect_type = batch
+        batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
-        self.log('val_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('val_loss', loss.item(), batch_size=batch_size, logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def test_step(self, batch):
@@ -120,15 +122,15 @@ class HarmonizationModule(LightningModule):
         
         if self.scheduler == 'cosine':
             print("Using CosineAnnealingLR scheduler")
-            scheduler = [torch.optim.scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)]
+            scheduler = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)]
         
         elif self.scheduler == 'step':
             print("Using StepLR scheduler")
-            scheduler = [torch.optim.scheduler.StepLR(optimizers, step_size=10, gamma=0.1)]
+            scheduler = [torch.optim.lr_scheduler.StepLR(optimizers, step_size=10, gamma=0.1)]
         
         elif self.scheduler == 'plateau':
             print("Using ReduceLROnPlateau scheduler")
-            scheduler = torch.optim.scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=10, verbose=True)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', min_lr=1e-8, factor=0.1, patience=5, verbose=True)
             return  {
                         'optimizer': optimizers,
                         'scheduler': scheduler,
