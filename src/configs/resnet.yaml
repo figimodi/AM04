@@ -1,11 +1,9 @@
 dataset:
-  defects_folder: ./../data/Defects/
-  no_defects_folder: ./../data/NoDefects/
-  synthetized_defects_folder: ./../data/Synthetic/
+  synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
   splits: [.5, .25, .25]
 model:
   resnet_type: resnet50
-  epochs: 25
+  epochs: 5
   batch_size: 4
   learning_rate: 1e-4
   optimizer: adam

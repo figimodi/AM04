@@ -8,6 +8,13 @@ log/
 # VsCode
 .vscode
 
-# mask generation
+# Mask generation
 PDNPic/
 *.pdn
+
+# Sysntethic images
+image[0-9]*_CT*
+image[0-9]*_CB*
+SyntheticDefects/
+SyntheticDefectsMasks/
+SyntheticDefectsHarmonized/

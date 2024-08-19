@@ -1,30 +1,38 @@
 import torch
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
+from torchvision.utils import save_image
+from pathlib import Path
 from typing import Tuple
 from pydantic import BaseModel
-from models import TSAINetwork
+from models import TSAINetworkV1, TSAINetworkV2
 
 
 class HarmonizationModule(LightningModule):
     def __init__(
-            self, 
+            self,
             epochs: int,
             lr: float, 
             optimizer: str, 
             scheduler: str, 
+            save_images: Path = None,
         ):
         super().__init__()
+        self.save_hyperparameters()
 
         # Network
-        self.net = TSAINetwork()
+        self.net = TSAINetworkV1()
 
         # Training params
         self.epochs = epochs
         self.lr = lr
         self.optimizer = optimizer
         self.scheduler = scheduler
+
+        # Additional params
+        self.save_images = save_images
 
         # Test outputs
         self.test_outputs = []
@@ -37,28 +45,35 @@ class HarmonizationModule(LightningModule):
         return torch.nn.functional.mse_loss(y, original_image)
 
     def training_step(self, batch):
-        original_image, fake_image = batch
+        original_image, fake_image, defect_type = batch
+        batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
-        self.log('train_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('train_loss', loss.item(), batch_size=batch_size, logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def validation_step(self, batch):
-        original_image, fake_image = batch
+        original_image, fake_image, defect_type = batch
+        batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
-        self.log('val_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('val_loss', loss.item(), batch_size=batch_size, logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
     def test_step(self, batch):
-        original_image, fake_image = batch
+        original_image, fake_image, defect_type = batch
         y = self.net(fake_image)
-        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image)))
+        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image), defect_type))
         return None
 
     def on_test_epoch_end(self):
-        for i, (y, original_image, fake_image) in enumerate(self.test_outputs[:10]):
-            for sample in range(y.shape[0]):
+        for i, (y, original_image, fake_image, defect_type) in enumerate(self.test_outputs):
+            if self.save_images:
+                # Save each image in the batch
+                for z in range(y.shape[0]):
+                    save_image(y[z], os.path.join(self.save_images, f'image_{i}_{z}_{defect_type[z]}.png'))
+            
+            for sample in range(min(y.shape[0], 10)):
                 fig, axes = plt.subplots(1, 3, figsize=(12, 6))
 
                 # Display the artifact image (assuming y is in [batch_size, 3, height, width] format)
@@ -87,7 +102,7 @@ class HarmonizationModule(LightningModule):
 
                 plt.close(fig)
 
-        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _ in self.test_outputs]).mean()
+        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _, _ in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
@@ -107,15 +122,15 @@ class HarmonizationModule(LightningModule):
         
         if self.scheduler == 'cosine':
             print("Using CosineAnnealingLR scheduler")
-            scheduler = [torch.optim.scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)]
+            scheduler = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)]
         
         elif self.scheduler == 'step':
             print("Using StepLR scheduler")
-            scheduler = [torch.optim.scheduler.StepLR(optimizers, step_size=10, gamma=0.1)]
+            scheduler = [torch.optim.lr_scheduler.StepLR(optimizers, step_size=10, gamma=0.1)]
         
         elif self.scheduler == 'plateau':
             print("Using ReduceLROnPlateau scheduler")
-            scheduler = torch.optim.scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=10, verbose=True)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', min_lr=1e-8, factor=0.1, patience=5, verbose=True)
             return  {
                         'optimizer': optimizers,
                         'scheduler': scheduler,

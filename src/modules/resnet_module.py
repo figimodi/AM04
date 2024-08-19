@@ -5,6 +5,7 @@ from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
 from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
+from datasets import Defect
 
 resnet_architectures = {
     'resnet18': ResNet18,
@@ -25,6 +26,7 @@ class ResNetModule(LightningModule):
             scheduler: str, 
         ):
         super().__init__()
+        self.save_hyperparameters()
 
         # Network
         self.model = resnet_architectures[resnet_type]()
@@ -66,8 +68,6 @@ class ResNetModule(LightningModule):
         return None
 
     def on_test_epoch_end(self):
-        label_mapping = {0: 'no_defects', 1: 'defects'}
-        
         for i, (image, prediction, label) in enumerate(self.test_outputs):
             batch_size = image.shape[0]
             for idx in range(batch_size):
@@ -88,8 +88,8 @@ class ResNetModule(LightningModule):
                 else:
                     prediction_text_color = 'red'
 
-                prediction_text = label_mapping[predicted_class]
-                label_text = label_mapping[correct_class]
+                prediction_text = Defect(predicted_class).name
+                label_text = Defect(correct_class).name
 
                 ax.text(0.5, -0.1, f'Prediction: {prediction_text}', ha='center', va='center', transform=ax.transAxes, fontsize=12, color=prediction_text_color)
                 ax.text(0.5, -0.2, f'Label: {label_text}', ha='center', va='center', transform=ax.transAxes, fontsize=12, color='black')
@@ -104,10 +104,10 @@ class ResNetModule(LightningModule):
                 plot_image = torch.from_numpy(plot_image)
                 plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
-            # Log the image to TensorBoard
-            self.logger.experiment.add_image(f'Comparison_{i+1}_{idx+1}.png', plot_image, self.current_epoch, dataformats='HWC')
+                # Log the image to TensorBoard
+                self.logger.experiment.add_image(f'Comparison_{i+1}_{idx+1}.png', plot_image, self.current_epoch, dataformats='HWC')
 
-            plt.close(fig)
+                plt.close(fig)
 
         # Calculate the mean test loss
         loss = torch.tensor([self.loss_function(prediction, label) for _, prediction, label in self.test_outputs]).mean()

@@ -8,9 +8,9 @@ class DatasetConfig(BaseModel):
     defects_masks_folder: Path
     splits: List[float]
 
-class ResNetDatasetConfig(DatasetConfig):
-    no_defects_folder: Path
+class ResNetDatasetConfig(BaseModel):
     synthetized_defects_folder: Optional[Path]
+    splits: List[float]
 
 class ModelConfig(BaseModel):
     epochs: int
@@ -19,6 +19,7 @@ class ModelConfig(BaseModel):
     optimizer: str
     scheduler: str
     only_test: bool
+    save_images: Optional[Path] = None
     pretrained: Optional[Path] = None
 
 class ResNetConfig(ModelConfig):
@@ -35,7 +36,7 @@ class CheckpointConfig(BaseModel):
     mode: str
 
 class Config(BaseModel):
-    dataset: Union[ResNetDatasetConfig, DatasetConfig]
+    dataset: Union[DatasetConfig, ResNetConfig]
     model: Union[ResNetConfig, ModelConfig]
     logger: LoggerConfig
     checkpoint: CheckpointConfig

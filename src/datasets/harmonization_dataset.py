@@ -8,6 +8,7 @@ from PIL import Image
 import torch
 from collections import defaultdict
 
+
 class HarmonizationDatasetSplit(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.data = data
@@ -23,7 +24,8 @@ class HarmonizationDatasetSplit(Dataset):
         fake_image = transform(Image.open(sample.fake_image).convert('L').resize((512, 512)))
         mask_image = transform(Image.open(sample.mask_image).convert('L').resize((512, 512)))
         input_tensor = torch.cat((fake_image, mask_image), 0)
-        return (original_image, input_tensor)
+        defect_type = sample.fake_image.split('_')[1]
+        return (original_image, input_tensor, defect_type)
 
     def __iter__(self):
         for sample in self.data:
@@ -42,10 +44,11 @@ class HarmonizationDataset(Dataset):
         
         # Create the dictionary with the paths of masks {"ImageX" : [mask_path_K,...]}
         defect_masks = defaultdict(list)
-        # Append the normal defect masks
-        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img)) for img in os.listdir(defects_masks_folder) if img.endswith(".jpg")]
-        # Append the combined defect masks
-        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, "combinations", img)) for img in os.listdir(os.path.join(defects_masks_folder, "combinations")) if img.endswith(".jpg")]
+        # Append defect masks
+        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img_name, img)) for img_name in os.listdir(defects_masks_folder) for img in os.listdir(os.path.join(defects_masks_folder, img_name)) if (img.endswith(".jpg") or img.endswith(".png")) and '_L_' not in img ]
+
+        for img_name in defect_masks.keys():
+            defect_masks[img_name].sort(key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0]))
 
         for image_name in os.listdir(defects_folder):
             image_folder_path = os.path.join(defects_folder, image_name)
@@ -62,14 +65,16 @@ class HarmonizationDataset(Dataset):
                 # Associate each fake image with its corresponding mask
                 for fake_image in images:
                     img_metadata = fake_image.split("_")
+                    img_metadata[-1] = img_metadata[-1].split('.')[0] #remove file extension
+                    
                     img_name = img_metadata[0]
-                    img_mask = int(img_metadata[2])
+                    img_mask_id = int(img_metadata[2])
                     
                     data.append(
                         {
                             'original_image': original_image_path,
                             'fake_image': os.path.join(image_folder_path, fake_image),
-                            'mask_image': defect_masks[img_name][img_mask]
+                            'mask_image': defect_masks[img_name][img_mask_id]
                         }
                     )
 
@@ -88,7 +93,37 @@ class HarmonizationDataset(Dataset):
         splits = list()
         start_idx = 0
         for size in split_sizes:
-            splits.append(HarmonizationDatasetSplit(df.iloc[start_idx:start_idx + size]))
-            start_idx += size
+            if size == 0:
+                splits.append(HarmonizationDatasetSplit(df.iloc[0]))
+            else:
+                splits.append(HarmonizationDatasetSplit(df.iloc[start_idx:start_idx + size]))
+                start_idx += size
     
         return tuple(splits)    
+
+
+class HarmonizationDatasetSynthetic(HarmonizationDataset):
+    def __init__(self, defects_folder: Path, defects_masks_folder: Path):
+        super(HarmonizationDatasetSynthetic, self).__init__(defects_folder, defects_masks_folder)
+
+    def __load__(self, defects_folder: Path, defects_masks_folder: Path) -> pd.DataFrame:
+        data = list()
+
+        for image in os.listdir(defects_folder):
+            image_path = os.path.join(defects_folder, image)
+            
+            #extension = os.path.basename(image_path).split(".")[1]
+            
+            image_mask = os.path.basename(image_path).replace(f'.jpg', f'_mask.png')
+            
+            image_mask_path = os.path.join(defects_masks_folder, image_mask)
+
+                
+            data.append({
+                    'original_image': image_path,
+                    'fake_image': image_path,
+                    'mask_image': image_mask_path
+                }
+            )
+
+        return pd.DataFrame(data)

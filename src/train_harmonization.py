@@ -36,6 +36,7 @@ if __name__ == '__main__':
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
             scheduler=config.model.scheduler,
+            save_images=config.model.save_images,
         )
     else:
         module = HarmonizationModule.load_from_checkpoint(
@@ -45,13 +46,14 @@ if __name__ == '__main__':
             lr=config.model.learning_rate,
             optimizer=config.model.optimizer,
             scheduler=config.model.scheduler,
+            save_images=config.model.save_images,
         )
 
     # Set callback function to save checkpoint of the model
     checkpoint_cb = ModelCheckpoint(
         monitor=config.checkpoint.monitor,
         dirpath=os.path.join(config.logger.log_dir, config.logger.experiment_name, f'version_{config.logger.version}'),
-        filename='epoch={epoch:03d}_loss={config.checkpoint.monitor:.4f}',
+        filename='{epoch:03d}_{' + config.checkpoint.monitor + ':.8f}',
         save_weights_only=True,
         save_top_k=config.checkpoint.save_top_k,
         mode=config.checkpoint.mode,
@@ -77,14 +79,3 @@ if __name__ == '__main__':
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)
-
-    # Log into yaml file the config
-    with open(os.path.join(config.logger.log_dir, config.logger.experiment_name, f'version_{config.logger.version}', 'hparams.yaml'), 'w') as yaml_file:
-        hparams = {
-            'epochs': config.model.epochs,
-            'batch_size': config.model.batch_size,
-            'learning_rate': config.model.learning_rate,
-            'optimizer': config.model.optimizer,
-            'scheduler': config.model.scheduler,
-        }
-        yaml.dump(hparams, yaml_file)
