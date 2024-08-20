@@ -46,7 +46,7 @@ def get_pos_topleft(image):
 
 def main(samples_number_per_defect = 10, probability_few_defects = .8):
     # probability of having few defects against having many defects (few and many defined next)
-    masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename ]
+    masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and (('_PD_' in mask_filename and 'Spattering' not in mask_filename) or ('_PDG_' in mask_filename)) and int(mask_folder.split('Image')[-1]) < 50 ]
     nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg') or f.endswith('.png')]
     defect_types = list(set([f.split('_')[3].split('.')[0] for f in masks_paths]))
 

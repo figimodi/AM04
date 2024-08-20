@@ -28,8 +28,8 @@ def delete_old_files():
     
 def main():
     #No laser, no whole mask
-    masks_filenames = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_MASK) if os.path.isdir(os.path.join(PATH_MASK, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_MASK, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename ]
-    defect_folders = [ defect_folder for defect_folder in os.listdir(PATH_DEFECTS) if os.path.isdir(os.path.join(PATH_DEFECTS, defect_folder))]
+    masks_filenames = [ os.path.join(mask_folder, mask_filename) for mask_folder in os.listdir(PATH_MASK) if os.path.isdir(os.path.join(PATH_MASK, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_MASK, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and (('_PD_' in mask_filename and 'Spattering' not in mask_filename) or ('_PDG_' in mask_filename)) and int(mask_folder.split('Image')[-1]) < 50 ]
+    defect_folders = [ defect_folder for defect_folder in os.listdir(PATH_DEFECTS) if os.path.isdir(os.path.join(PATH_DEFECTS, defect_folder)) and int(defect_folder.split('Image')[-1]) < 50]
     
     # print(masks_filenames)
     # print(defect_folders)
@@ -57,11 +57,11 @@ def main():
                 mask_combinations_i_cdm = combinations(current_defect_masks, i_cdm)    
                 all_current_defect_masks.extend(mask_combinations_i_cdm) # list of sublists (each sublist tells the combination of defect masks)
                 
-        if len(current_defect_masks) > 1 and os.path.isfile(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_Mask_0.png')):
-            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_0.png')])
+        if len(current_defect_masks) > 1 and os.path.isfile(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_Mask_02.png')):
+            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_02.png')])
         else:
             all_current_defect_masks = []
-            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_0.png')])
+            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_02.png')])
         
         # for each mask apply the resulting mask and color transfer
         for i_acdm, mask_filename_comb in enumerate(all_current_defect_masks):
