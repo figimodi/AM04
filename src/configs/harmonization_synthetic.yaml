@@ -9,7 +9,7 @@ model:
   optimizer: adam
   scheduler: none
   save_images: ./../data/SyntheticDefectsHarmonized/
-  only_test: False
+  only_test: True
 logger:
   log_dir: ./log
   experiment_name: harmonize_synthetic_images

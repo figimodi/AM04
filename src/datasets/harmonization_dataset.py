@@ -66,7 +66,7 @@ class HarmonizationDataset(Dataset):
                 for fake_image in images:
                     img_metadata = fake_image.split("_")
                     img_metadata[-1] = img_metadata[-1].split('.')[0] #remove file extension
-                    
+
                     img_name = img_metadata[0]
                     img_mask_id = int(img_metadata[2])
                     
