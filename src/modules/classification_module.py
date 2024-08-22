@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
-from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5
+from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5, GrayVGG16_BN, GrayVGG16
 from datasets import Defect
 
 resnet_architectures = {
@@ -32,7 +32,7 @@ class ClassificationModule(LightningModule):
         if 'resnet' in name:
             self.model = resnet_architectures[name]()
         else:
-            self.model = LeNet5()
+            self.model = GrayVGG16_BN()
 
         # Training params
         self.epochs = epochs

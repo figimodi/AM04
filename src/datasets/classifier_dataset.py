@@ -38,7 +38,7 @@ class ClassifierDatasetSplit(Dataset):
         ])
 
         sample = self.data.iloc[idx, :]
-        image = Image.open(sample.image_path).convert('RGB')
+        image = Image.open(sample.image_path).convert('L')
         image = transform(image)
         label = sample.label
         return (image, label)

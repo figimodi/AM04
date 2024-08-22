@@ -1,0 +1,19 @@
+dataset:
+  synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
+  splits: [.5, .25, .25]
+model:
+  name: GrayVGG16_BN
+  epochs: 50
+  batch_size: 4
+  learning_rate: 1e-5
+  optimizer: adam
+  scheduler: none
+  only_test: False
+logger:
+  log_dir: ./log
+  experiment_name: train_resnet
+  version: 1
+checkpoint:
+  monitor: val_loss
+  save_top_k: 3
+  mode: min
