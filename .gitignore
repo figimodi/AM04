@@ -18,3 +18,4 @@ image[0-9]*_CB*
 SyntheticDefects/
 SyntheticDefectsMasks/
 SyntheticDefectsHarmonized/
+Image5[0-9]*/

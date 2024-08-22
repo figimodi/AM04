@@ -1,4 +1,6 @@
 import os
+import shutil
+
 
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_TO_SYNTHETIC = os.path.join(ROOT_DIR, 'data', 'SyntheticDefects')
@@ -32,6 +34,20 @@ def main():
         os.remove(file_path)        
                     
     print('Old synthetic images deleted!')
+
+    for folder_name in os.listdir(os.path.join('../data', 'DefectsMasks')):
+        folder_path = os.path.join(os.path.join('../data', 'DefectsMasks'), folder_name)
+        index = int(folder_name.split('Image')[-1])
+        if os.path.isdir(folder_path) and index > 47:
+            shutil.rmtree(folder_path)
+            
+    for folder_name in os.listdir(os.path.join('../data', 'Defects')):
+        folder_path = os.path.join(os.path.join('../data', 'Defects'), folder_name)
+        index = int(folder_name.split('Image')[-1])
+        if os.path.isdir(folder_path) and index > 47:
+            shutil.rmtree(folder_path)
+            
+    print("Old spattering generations deleted!")
 
 if __name__ == "__main__":
     main()
