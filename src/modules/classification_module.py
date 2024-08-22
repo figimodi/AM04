@@ -114,9 +114,11 @@ class ClassificationModule(LightningModule):
 
         # Calculate the mean test loss
         loss = torch.tensor([self.loss_function(prediction, label) for _, prediction, label in self.test_outputs]).mean()
-        accuracy = np.array([item for batch in [(torch.argmax(prediction, dim=1)==label).tolist() for _, prediction, label in self.test_outputs] for item in batch]).mean()*100
+        top1 = np.array([item for batch in [(torch.argmax(prediction, dim=1)==label).tolist() for _, prediction, label in self.test_outputs] for item in batch]).mean()*100
+        top3 = self.calculate_top_3_accuracy()
         self.log('test_loss', loss, logger=True, prog_bar=True, on_step=False, on_epoch=True)
-        self.log('test_accuracy', accuracy, logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('test_top1', top1, logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('test_top3', top3, logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         scheduler = None
@@ -154,3 +156,19 @@ class ClassificationModule(LightningModule):
             return [optimizers], scheduler
         return [optimizers]
         
+    def calculate_top_3_accuracy(self):
+        top3_correct = []
+        
+        for _, prediction, label in self.test_outputs:
+            # Get the top 3 predictions for each sample
+            top3_preds = torch.topk(prediction, 3, dim=1).indices
+            
+            # Check if the true label is among the top 3 predictions
+            is_top3_correct = (top3_preds == label.unsqueeze(1)).any(dim=1).tolist()
+            
+            # Collect results
+            top3_correct.extend(is_top3_correct)
+        
+        # Calculate top-3 accuracy
+        top3_accuracy = np.mean(top3_correct) * 100
+        return top3_accuracy

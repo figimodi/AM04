@@ -27,12 +27,18 @@ The dataset is composed of two folders:
 - Defects: contains a set of images with several defects like holes, spattering etc. They consist of 47 images of different layers with one or multiple defects in each of them without labeling. 
 - NoDefects: contains plain image of the powder bed without defects. They consist of 27 images without defects that could be used to generate synthetic images with defects. 
 
-## Run code and watch results
+## Guide
 First thing first, install all necessary libraries: `pip install -r requirements.txt`
 
 Then move to the directory `src/`:
-- Launch the training: `python .\train_harmonization.py --config configs/harmonization.yaml`
-- See results using tensorboard: `tensorboard --logdir log/train_harmonization/version_1/ --port 1500`
+- Launch `python generate_color_transferred_images.py` to generate different combination of defects with color manipulation.
+- Launch the harmonization training of tsai network with:`python .\train_harmonization.py --config configs/harmonization.yaml`
+- Launch `python generate_synthetic_images.py --tot_samples {NUMBER}` to generate new synthetic images with defects.
+- Launch `python harmonize_synthetic_images.py --config configs/harmonization_synthetic.yaml --only_test --pretrained {MODEL}` to harmonize the synthetic images previously generated.
+- Launch `python .\train_classifier.py --config .\configs\resnet.yaml` to train the classifier with resnet, use `.\configs\lenet5.yaml` to use lenet5.
+- See results using tensorboard: `tensorboard --logdir log --port {PORT}`
+
+*All the {VARIABLES} inside brackets are to be substituted with actual values
 
 ## References
 - Sun, S., M. Brandt, and M. Easton. "Powder bed fusion processes: an overview." Laser Additive Manufacturing: Materials, Design, Technologies, and Applications (2016): 55. 
