@@ -2,7 +2,7 @@ dataset:
   synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
   splits: [.5, .25, .25]
 model:
-  name: GrayVGG16_BN
+  name: vgg_bn
   epochs: 50
   batch_size: 4
   learning_rate: 1e-5

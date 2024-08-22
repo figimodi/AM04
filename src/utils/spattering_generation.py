@@ -119,7 +119,7 @@ def generate_images_with_random_proliferation(mask, min_dist=10, max_points=100,
 
 if __name__ == '__main__':
     # Load the mask from a PNG file
-    mask_path = 'data\DefectsMasks\Image23\Image23_Mask_0.jpg'  # Replace with your PNG file path
+    mask_path = '../../data/DefectsMasks/Image23/Image23_Mask_0.png'  # Replace with your PNG file path
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 
     # Ensure the mask is binary (i.e., only 0 or 255 values)
@@ -127,14 +127,14 @@ if __name__ == '__main__':
 
     # Generate images with the given parameters
     gray_image_rgb, binary_image = generate_images_with_random_proliferation(
-        mask, min_dist=22, max_points=100, max_spread=25, darkest_gray=126, lightest_gray=200
+        mask, min_dist=5, max_points=500, max_spread=15, darkest_gray=150, lightest_gray=170
     )
 
-    rgb_path = 'data\Spattering\Spattering.png'
-    binary_path = 'data\Spattering\Mask.png'
+    # rgb_path = 'data\Spattering\Spattering.png'
+    # binary_path = 'data\Spattering\Mask.png'
 
-    cv2.imwrite(rgb_path, gray_image_rgb)
-    cv2.imwrite(binary_path, binary_image)
+    # cv2.imwrite(rgb_path, gray_image_rgb)
+    # cv2.imwrite(binary_path, binary_image)
 
     # Plot the results
     plt.figure(figsize=(12, 6))

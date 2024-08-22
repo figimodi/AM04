@@ -4,7 +4,7 @@ import numpy as np
 import random
 import pickle
 from shutil import copyfile
-from SpatteringGen import generate_images_with_random_proliferation
+from utils.spattering_generation import generate_images_with_random_proliferation
 
 def process_defects_masks(base_path):
     defects_masks_path = os.path.join(base_path, 'DefectsMasks')
@@ -51,7 +51,7 @@ def process_defects_masks(base_path):
                     if D == 'Spattering':
                         # Generate and proliferate for Spattering
                         gray_image_rgb, new_mask_binary = generate_images_with_random_proliferation(
-                            image_binary, min_dist=10, max_points=50, max_spread=10, darkest_gray=50, lightest_gray=200
+                            image_binary, min_dist=5, max_points=500, max_spread=15, darkest_gray=150, lightest_gray=170
                         )
 
                         # Save the proliferated mask in DefectsMasks as A_PDG_C_D.png
@@ -88,7 +88,6 @@ def process_defects_masks(base_path):
                 print(f"Saved combined mask with proliferations (Task 3): {mask_02_save_path}")
 
     return proliferated_images
-
 
 def substitute_proliferated_images(base_path, proliferated_images, num_images_to_generate, num_spattering=2):
     defects_path = os.path.join(base_path, 'Defects')
@@ -156,6 +155,7 @@ def substitute_proliferated_images(base_path, proliferated_images, num_images_to
 
             # Substitute the proliferated points onto the no-defect image
             no_defect_with_proliferation[proliferated_points_mask] = proliferated_points[proliferated_points_mask]
+        
 
         # Save the new image in the Defects folder starting from Image50
         new_image_defects_folder = os.path.join(defects_path, f"Image{start_index + i}")
@@ -164,7 +164,7 @@ def substitute_proliferated_images(base_path, proliferated_images, num_images_to
         os.makedirs(new_image_mask_folder, exist_ok=True)
 
         # Get the base name of the no-defect image but change extension to jpg
-        new_image_path = os.path.join(new_image_defects_folder, f"Image{start_index + i}.png")
+        new_image_path = os.path.join(new_image_defects_folder, f"Image{start_index + i}.jpg")
         cv2.imwrite(new_image_path, no_defect_with_proliferation)
         print(f"Saved new defect image: {new_image_path}")
 
@@ -174,10 +174,8 @@ def substitute_proliferated_images(base_path, proliferated_images, num_images_to
         cv2.imwrite(mask_save_path, combined_mask)
         print(f"Saved combined mask (Task 1): {mask_save_path}")
 
-
-
 if __name__ == '__main__':
-    base_path = 'data'  # Replace with your base directory path
+    base_path = '../data'  # Replace with your base directory path
     
     # First, process the defect masks and generate proliferated images
     proliferated_images = process_defects_masks(base_path)
@@ -185,3 +183,8 @@ if __name__ == '__main__':
     # Now, use some of those proliferated images to create new defect images
     num_images_to_generate = 10  # Specify the number of images to generate
     substitute_proliferated_images(base_path, proliferated_images, num_images_to_generate)
+
+    for dir in os.listdir('../data/Defects'): 
+        for file in os.listdir(os.path.join('../data/Defects', dir)): 
+            if 'Spattering' in file: 
+                os.remove(os.path.join('../data/Defects', dir, file))
