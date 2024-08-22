@@ -193,7 +193,7 @@ if __name__ == '__main__':
     num_images_to_generate = 10  # Specify the number of images to generate
     substitute_proliferated_images(base_path, proliferated_images, num_images_to_generate)
 
-    for dir in os.listdir('../data/Defects'): 
-        for file in os.listdir(os.path.join('../data/Defects', dir)): 
-            if 'Spattering' in file: 
-                os.remove(os.path.join('../data/Defects', dir, file))
+    # for dir in os.listdir('../data/Defects'): 
+    #     for file in os.listdir(os.path.join('../data/Defects', dir)): 
+    #         if 'Spattering' in file: 
+    #             os.remove(os.path.join('../data/Defects', dir, file))
