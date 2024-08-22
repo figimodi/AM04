@@ -1,46 +1,48 @@
 import numpy as np
 import cv2
 import random
+import argparse
 from scipy.spatial.distance import cdist
+from PIL import Image
 import matplotlib.pyplot as plt
 
-def generate_random_points(mask, min_dist, max_points=100):
-    """
-    Generate random points in the white areas of a binary mask.
-    Points will be at least min_dist apart.
-    
-    Args:
-    - mask: Binary mask where white areas are valid for point placement.
-    - min_dist: Minimum distance between any two points.
-    - max_points: Maximum number of points to place.
-    
-    Returns:
-    - points: List of (x, y) tuples representing the points.
-    """
-    # Find white pixel coordinates
-    white_coords = np.column_stack(np.where(mask == 255))
-    
-    points = []
-    attempts = 0
-    
-    while len(points) < max_points and attempts < max_points * 10:
-        # Randomly choose a white pixel
-        idx = np.random.randint(0, len(white_coords))
-        candidate_point = white_coords[idx]
-        
-        if len(points) == 0:
-            points.append(candidate_point)
-        else:
-            # Ensure the new point is at least min_dist away from all existing points
-            distances = cdist([candidate_point], points)
-            if np.all(distances >= min_dist):
-                points.append(candidate_point)
-        
-        attempts += 1
-    
+def generate_random_points(mask, min_dist, max_points, density_factor=5, outside_bias=0.3, max_outside_dist=0.1): 
+    white_coords = np.column_stack(np.where(mask == 255)) 
+    if len(white_coords) == 0: 
+        return [] 
+ 
+    center = np.array([mask.shape[0] // 2, mask.shape[1] // 2]) 
+    distances_from_center = np.linalg.norm(white_coords - center, axis=1) 
+    inverted_distances = np.max(distances_from_center) - distances_from_center + 1e-6 
+    biased_distances = inverted_distances ** density_factor 
+    probabilities = biased_distances / np.sum(biased_distances) 
+    points = [] 
+    attempts = 0 
+     
+    while len(points) < max_points and attempts < max_points * 10: 
+        if np.random.rand() < outside_bias: 
+            while True: 
+                candidate_point = np.random.randint(0, mask.shape[0]), np.random.randint(0, mask.shape[1]) 
+                dist_from_center = np.linalg.norm(np.array(candidate_point) - center) / np.linalg.norm(center) 
+                 
+                if dist_from_center <= max_outside_dist: 
+                    break 
+        else: 
+            idx = np.random.choice(len(white_coords), p=probabilities) 
+            candidate_point = white_coords[idx] 
+         
+        if len(points) == 0: 
+            points.append(candidate_point) 
+        else: 
+            distances = cdist([candidate_point], points) 
+            if np.all(distances >= min_dist): 
+                points.append(candidate_point) 
+         
+        attempts += 1 
+     
     return points
 
-def proliferate_points_randomly(image, points, max_spread=10, darkest_gray=129, lightest_gray=196, newOrigin_Threshold: float = 0.7):
+def proliferate_points_randomly(image, points, max_spread, darkest_gray, lightest_gray, new_origin_threshold: float = 0.7):
     """
     Proliferate points in an image randomly, using RGB format.
     
@@ -82,12 +84,12 @@ def proliferate_points_randomly(image, points, max_spread=10, darkest_gray=129, 
                     new_intensity = random.randint(darkest_gray, current_intensity)
                     gray_color = (new_intensity, new_intensity, new_intensity)
                     image[new_x, new_y] = gray_color
-                    if random.random() > newOrigin_Threshold:
+                    if random.random() > new_origin_threshold:
                         x, y = new_x, new_y  # Move the spread origin to this new point
 
     return image
 
-def generate_images_with_random_proliferation(mask, min_dist=10, max_points=100, max_spread=10, darkest_gray=129, lightest_gray=196):
+def generate_images_with_random_proliferation(mask, min_dist, max_points, max_spread, darkest_gray, lightest_gray):
     """
     Generate two images based on the input mask: one with random RGB proliferation and another binary image.
     
@@ -118,6 +120,14 @@ def generate_images_with_random_proliferation(mask, min_dist=10, max_points=100,
     return gray_image_rgb, binary_image
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generate synthetic images')
+    parser.add_argument('--min_dist', type=int, help='Minimum distance between points', dest='MIN_DIST', default=0)    
+    parser.add_argument('--max_points', type=int, help='Max number of points in the area', dest='MAX_POINTS', default=400)    
+    parser.add_argument('--max_spread', type=int, help='Maximum spread among points', dest='MAX_SPREAD', default=10)    
+    parser.add_argument('--darkest_gray', type=int, help='The hexadecimal value for the darkest gray', dest='DARKEST_GRAY', default=160)    
+    parser.add_argument('--lightest_gray', type=int, help='The hexadecimal value for the lightest gray', dest='LIGHTEST_GRAY', default=170)    
+    args = parser.parse_args()
+
     # Load the mask from a PNG file
     mask_path = '../../data/DefectsMasks/Image23/Image23_Mask_0.png'  # Replace with your PNG file path
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
@@ -126,8 +136,8 @@ if __name__ == '__main__':
     _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
 
     # Generate images with the given parameters
-    gray_image_rgb, binary_image = generate_images_with_random_proliferation(
-        mask, min_dist=5, max_points=500, max_spread=15, darkest_gray=150, lightest_gray=170
+    gray_image_rgb, binary_image = generate_images_with_random_proliferation( 
+        mask, min_dist=args.MIN_DIST, max_points=args.MAX_POINTS, max_spread=args.MAX_SPREAD, darkest_gray=args.DARKEST_GRAY, lightest_gray=args.LIGHTEST_GRAY 
     )
 
     # rgb_path = 'data\Spattering\Spattering.png'
@@ -137,17 +147,25 @@ if __name__ == '__main__':
     # cv2.imwrite(binary_path, binary_image)
 
     # Plot the results
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 3, 1)
-    plt.imshow(mask, cmap='gray')
-    plt.title('Original Mask Image')
+    # plt.figure(figsize=(12, 6))
+    # plt.subplot(1, 3, 1)
+    # plt.imshow(mask, cmap='gray')
+    # plt.title('Original Mask Image')
 
-    plt.subplot(1, 3, 2)
-    plt.imshow(gray_image_rgb)
-    plt.title('RGB Image with Random Proliferation')
+    # plt.subplot(1, 3, 2)
+    # plt.imshow(gray_image_rgb)
+    # plt.title('RGB Image with Random Proliferation')
 
-    plt.subplot(1, 3, 3)
-    plt.imshow(binary_image, cmap='gray')
-    plt.title('Binary Image from Proliferation')
+    # plt.subplot(1, 3, 3)
+    # plt.imshow(binary_image, cmap='gray')
+    # plt.title('Binary Image from Proliferation')
+
+    plt.figure(figsize=(8,8))
+    nodefect_image = Image.fromarray(gray_image_rgb).convert('RGB') 
+    mask = Image.fromarray(binary_image).convert('L') 
+    background = Image.open('../../data/NoDefects/Image1.jpg').convert('RGB') 
+    background.paste(nodefect_image, (0, 0), mask) 
+    plt.imshow(background)
+    plt.title('Example')
 
     plt.show()

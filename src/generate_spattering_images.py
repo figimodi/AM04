@@ -3,10 +3,11 @@ import cv2
 import numpy as np
 import random
 import pickle
+import argparse
 from shutil import copyfile
-from utils.spattering_generation import generate_images_with_random_proliferation
+from utils.spattering import generate_images_with_random_proliferation
 
-def process_defects_masks(base_path):
+def process_defects_masks(base_path, min_dist, max_points, max_spread, darkest_gray, lightest_gray):
     defects_masks_path = os.path.join(base_path, 'DefectsMasks')
     defects_path = os.path.join(base_path, 'Defects')
     
@@ -51,7 +52,7 @@ def process_defects_masks(base_path):
                     if D == 'Spattering':
                         # Generate and proliferate for Spattering
                         gray_image_rgb, new_mask_binary = generate_images_with_random_proliferation(
-                            image_binary, min_dist=5, max_points=500, max_spread=15, darkest_gray=150, lightest_gray=170
+                            image_binary, min_dist=min_dist, max_points=max_points, max_spread=max_spread, darkest_gray=darkest_gray, lightest_gray=lightest_gray
                         )
 
                         # Save the proliferated mask in DefectsMasks as A_PDG_C_D.png
@@ -175,10 +176,18 @@ def substitute_proliferated_images(base_path, proliferated_images, num_images_to
         print(f"Saved combined mask (Task 1): {mask_save_path}")
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generate synthetic images')
+    parser.add_argument('--min_dist', type=int, help='Minimum distance between points', dest='MIN_DIST', default=0)    
+    parser.add_argument('--max_points', type=int, help='Max number of points in the area', dest='MAX_POINTS', default=400)    
+    parser.add_argument('--max_spread', type=int, help='Maximum spread among points', dest='MAX_SPREAD', default=10)    
+    parser.add_argument('--darkest_gray', type=int, help='The hexadecimal value for the darkest gray', dest='DARKEST_GRAY', default=160)    
+    parser.add_argument('--lightest_gray', type=int, help='The hexadecimal value for the lightest gray', dest='LIGHTEST_GRAY', default=170)    
+    args = parser.parse_args()
+
     base_path = '../data'  # Replace with your base directory path
     
     # First, process the defect masks and generate proliferated images
-    proliferated_images = process_defects_masks(base_path)
+    proliferated_images = process_defects_masks(base_path, args.MIN_DIST, args.MAX_POINTS, args.MAX_SPREAD, args.DARKEST_GRAY, args.LIGHTEST_GRAY)
 
     # Now, use some of those proliferated images to create new defect images
     num_images_to_generate = 10  # Specify the number of images to generate
