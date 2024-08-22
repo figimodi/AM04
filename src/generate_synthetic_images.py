@@ -2,6 +2,7 @@ import os
 import random
 from PIL import Image
 import numpy as np
+import argparse
 
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_TO_MASKS = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
@@ -132,8 +133,12 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
     print('Done!')
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generate synthetic images')
+    parser.add_argument('--tot_samples', type=int, help='Amount of synthetic images generated', required=True, dest='N_SAMPLES')    
+    args = parser.parse_args()
+
     os.makedirs(PATH_TO_SYNTHETIC, exist_ok=True)
     os.makedirs(PATH_TO_SYNTHETIC_MASKS, exist_ok=True)
     os.makedirs(PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED, exist_ok=True)
     delete_old_files()
-    main(samples_number_per_defect=25)
+    main(samples_number_per_defect=args.N_SAMPLES/5)

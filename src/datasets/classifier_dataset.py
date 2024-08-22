@@ -32,7 +32,7 @@ class ClassifierDatasetSplit(Dataset):
             transforms.Resize((512, 512)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+            # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.mean, std=self.std)
         ])
@@ -54,7 +54,7 @@ class ClassifierDatasetSplit(Dataset):
         
         for idx in range(len(self.data)):
             sample = self.data.iloc[idx, :]
-            image = Image.open(sample.image_path).convert('RGB')
+            image = Image.open(sample.image_path).convert('L')
             image = transform(image)
             means.append(image.mean(dim=[1, 2]))
             stds.append(image.std(dim=[1, 2]))
