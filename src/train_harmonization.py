@@ -77,5 +77,10 @@ if __name__ == '__main__':
     if not config.model.only_test:
         trainer.fit(model=module, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
+    # Get the best checkpoint path and load the best checkpoint for testing
+    best_checkpoint_path = checkpoint_cb.best_model_path
+    if best_checkpoint_path:
+        module = HarmonizationModule.load_from_checkpoint(name=config.model.name, checkpoint_path=best_checkpoint_path)
+
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)

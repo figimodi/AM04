@@ -9,8 +9,8 @@ class ResNet18(ResNet):
         super(ResNet18, self).__init__(BasicBlock, [2, 2, 2, 2])
         
         # Optionally load the pretrained weights for resnet18
-        pretrained_model = models.resnet18(pretrained=True)
-        self.load_state_dict(pretrained_model.state_dict())
+        # pretrained_model = models.resnet18(pretrained=True)
+        # self.load_state_dict(pretrained_model.state_dict())
 
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
         self.fc = nn.Linear(self.fc.in_features, 5)
@@ -57,8 +57,8 @@ class ResNet152(ResNet):
         super(ResNet152, self).__init__(Bottleneck, [3, 8, 36, 3])
         
         # Optionally load the pretrained weights for resnet152
-        pretrained_model = models.resnet152(pretrained=True)
-        self.load_state_dict(pretrained_model.state_dict())
+        # pretrained_model = models.resnet152(pretrained=True)
+        # self.load_state_dict(pretrained_model.state_dict())
 
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
         self.fc = nn.Linear(self.fc.in_features, 5)

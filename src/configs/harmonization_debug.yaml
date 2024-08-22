@@ -3,6 +3,7 @@ dataset:
   defects_masks_folder: C:\Users\grfil\Documents\GitHub\AM04\data\DefectsMasks
   splits: [.5, .25, .25]
 model:
+  name: tsai
   epochs: 1
   batch_size: 4
   learning_rate: 1e-4

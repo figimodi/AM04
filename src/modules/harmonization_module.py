@@ -1,5 +1,6 @@
 import torch
 import os
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
@@ -13,6 +14,7 @@ from models import TSAINetworkV1, TSAINetworkV2
 class HarmonizationModule(LightningModule):
     def __init__(
             self,
+            name: str,
             epochs: int,
             lr: float, 
             optimizer: str, 
@@ -33,6 +35,10 @@ class HarmonizationModule(LightningModule):
 
         # Additional params
         self.save_images = save_images
+        if self.save_images:
+            if os.path.exists(self.save_images):
+                shutil.rmtree(self.save_images)
+            os.mkdir(self.save_images)
 
         # Test outputs
         self.test_outputs = []

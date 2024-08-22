@@ -2,10 +2,10 @@ dataset:
   synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
   splits: [.5, .25, .25]
 model:
-  resnet_type: resnet50
-  epochs: 5
+  name: resnet18
+  epochs: 50
   batch_size: 4
-  learning_rate: 1e-4
+  learning_rate: 1e-5
   optimizer: adam
   scheduler: none
   only_test: False

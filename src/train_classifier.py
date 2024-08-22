@@ -4,7 +4,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 from utils import Parser
 from datasets import ClassifierDataset
-from modules import ResNetModule
+from modules import ClassificationModule
 import yaml
 import os
 
@@ -32,18 +32,18 @@ if __name__ == '__main__':
 
     # Load pretrained model or else start from scratch
     if config.model.pretrained is None:
-        module = ResNetModule(
-            resnet_type=config.model.resnet_type,
+        module = ClassificationModule(
+            name=config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
             scheduler=config.model.scheduler,
         )
     else:
-        module = ResNetModule.load_from_checkpoint(
+        module = ClassificationModule.load_from_checkpoint(
             map_location='cpu',
             checkpoint_path=config.model.pretrained,
-            resnet_type=config.model.resnet_type,
+            name=config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate,
             optimizer=config.model.optimizer,
@@ -77,6 +77,11 @@ if __name__ == '__main__':
     # Train
     if not config.model.only_test:
         trainer.fit(model=module, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
+
+    # Get the best checkpoint path and load the best checkpoint for testing
+    best_checkpoint_path = checkpoint_cb.best_model_path
+    if best_checkpoint_path:
+        module = ClassificationModule.load_from_checkpoint(name=config.model.name, checkpoint_path=best_checkpoint_path)
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)

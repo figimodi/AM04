@@ -3,7 +3,8 @@ dataset:
   defects_masks_folder: ./../data/SyntheticDefectsMasks/
   splits: [0, 0, 1]
 model:
-  epochs: 5
+  name: tsai
+  epochs: 1
   batch_size: 4
   learning_rate: 1e-4
   optimizer: adam

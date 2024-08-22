@@ -1,18 +1,17 @@
 dataset:
-  defects_folder: ./../data/Defects/
-  defects_masks_folder: ./../data/DefectsMasks/
+  synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
   splits: [.5, .25, .25]
 model:
-  name: tsai
+  name: lenet5
   epochs: 50
   batch_size: 4
-  learning_rate: 1e-4
+  learning_rate: 1e-3
   optimizer: adam
-  scheduler: plateau
+  scheduler: none
   only_test: False
 logger:
   log_dir: ./log
-  experiment_name: train_harmonization
+  experiment_name: train_resnet
   version: 1
 checkpoint:
   monitor: val_loss

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
-from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
+from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5
 from datasets import Defect
 
 resnet_architectures = {
@@ -16,10 +16,10 @@ resnet_architectures = {
 }
 
 
-class ResNetModule(LightningModule):
+class ClassificationModule(LightningModule):
     def __init__(
             self, 
-            resnet_type: str,
+            name: str,
             epochs: int,
             lr: float, 
             optimizer: str, 
@@ -29,7 +29,10 @@ class ResNetModule(LightningModule):
         self.save_hyperparameters()
 
         # Network
-        self.model = resnet_architectures[resnet_type]()
+        if 'resnet' in name:
+            self.model = resnet_architectures[name]()
+        else:
+            self.model = LeNet5()
 
         # Training params
         self.epochs = epochs
@@ -111,7 +114,9 @@ class ResNetModule(LightningModule):
 
         # Calculate the mean test loss
         loss = torch.tensor([self.loss_function(prediction, label) for _, prediction, label in self.test_outputs]).mean()
+        accuracy = np.array([item for batch in [(torch.argmax(prediction, dim=1)==label).tolist() for _, prediction, label in self.test_outputs] for item in batch]).mean()*100
         self.log('test_loss', loss, logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('test_accuracy', accuracy, logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         scheduler = None
@@ -130,15 +135,15 @@ class ResNetModule(LightningModule):
         
         if self.scheduler == 'cosine':
             print("Using CosineAnnealingLR scheduler")
-            scheduler = [torch.optim.scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)]
+            scheduler = [torch.optim.lr_scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)]
         
         elif self.scheduler == 'step':
             print("Using StepLR scheduler")
-            scheduler = [torch.optim.scheduler.StepLR(optimizers, step_size=10, gamma=0.1)]
+            scheduler = [torch.optim.lr_scheduler.StepLR(optimizers, step_size=10, gamma=0.1)]
         
         elif self.scheduler == 'plateau':
             print("Using ReduceLROnPlateau scheduler")
-            scheduler = torch.optim.scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=10, verbose=True)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=5, min_lr=1e-8, verbose=True)
             return  {
                         'optimizer': optimizers,
                         'scheduler': scheduler,

@@ -1,8 +1,8 @@
 from modules.harmonization_module import HarmonizationModule
-from modules.resnet_module import ResNetModule
+from modules.classification_module import ClassificationModule
 
 
 __all__ = [
     'HarmonizationModule',
-    'ResNetModule',
+    'ClassificationModule',
 ]

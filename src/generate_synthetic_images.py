@@ -136,4 +136,4 @@ if __name__ == '__main__':
     os.makedirs(PATH_TO_SYNTHETIC_MASKS, exist_ok=True)
     os.makedirs(PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED, exist_ok=True)
     delete_old_files()
-    main()
+    main(samples_number_per_defect=25)
