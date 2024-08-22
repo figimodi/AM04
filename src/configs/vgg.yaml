@@ -11,9 +11,10 @@ model:
   only_test: False
 logger:
   log_dir: ./log
-  experiment_name: train_resnet
+  experiment_name: train_vgg
   version: 1
 checkpoint:
   monitor: val_loss
   save_top_k: 3
   mode: min
+  

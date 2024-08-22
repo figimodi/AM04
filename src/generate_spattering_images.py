@@ -3,9 +3,9 @@ import argparse
 import shutil
 import random
 import os
-
 from utils.spattering import generate_images_with_random_proliferation
 from PIL import Image
+
 
 def clear_old_spattering_generations(end_true_masks, defects_masks_path, defects_paths):
     for folder_name in os.listdir(defects_masks_path):
@@ -81,3 +81,4 @@ if __name__ == '__main__':
         print(f'{i+1}/{N_SPATTERING_IMAGES}', end='\r')
         
     print("Done!")
+    

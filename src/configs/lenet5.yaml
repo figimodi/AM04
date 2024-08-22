@@ -5,15 +5,16 @@ model:
   name: lenet5
   epochs: 50
   batch_size: 4
-  learning_rate: 1e-3
+  learning_rate: 1e-5
   optimizer: adam
   scheduler: none
   only_test: False
 logger:
   log_dir: ./log
-  experiment_name: train_resnet
+  experiment_name: train_lenet5
   version: 1
 checkpoint:
   monitor: val_loss
   save_top_k: 3
   mode: min
+  

@@ -9,6 +9,7 @@ ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_MASK = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
 PATH_DEFECTS = os.path.join(ROOT_DIR, 'data', 'Defects')
 
+
 def delete_old_files():
     for dir_image in os.listdir(PATH_DEFECTS):
         if os.path.isdir(os.path.join(PATH_DEFECTS, dir_image)):
@@ -102,3 +103,4 @@ def main():
 if __name__ == "__main__":
     delete_old_files()
     main()
+    

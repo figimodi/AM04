@@ -4,12 +4,12 @@ import random
 from PIL import Image,ImageEnhance
 import os
 
+
 def apply_color_transfer(image, mask):
-    
     manipulated_images = []
     
     masked_image = Image.new("RGB", image.size, (0, 0, 0))
-    masked_image.paste(image, (0, 0), mask)  # Paste modifies in place
+    masked_image.paste(image, (0, 0), mask)
     
     br_enhancer = ImageEnhance.Brightness(masked_image)
     co_enhancer = ImageEnhance.Contrast(masked_image)
@@ -36,3 +36,4 @@ def apply_color_transfer(image, mask):
         manipulated_images.append(manipulated_image)
         
     return manipulated_images
+    

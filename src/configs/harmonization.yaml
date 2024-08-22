@@ -4,7 +4,7 @@ dataset:
   splits: [.5, .25, .25]
 model:
   name: tsai
-  epochs: 50
+  epochs: 200
   batch_size: 4
   learning_rate: 1e-4
   optimizer: adam
@@ -18,3 +18,4 @@ checkpoint:
   monitor: val_loss
   save_top_k: 3
   mode: min
+  

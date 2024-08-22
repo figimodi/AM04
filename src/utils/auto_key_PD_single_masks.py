@@ -2,6 +2,7 @@ import pyautogui
 import time
 import keyboard
 
+
 def perform_hotkey_sequence_1():
     pyautogui.hotkey('ctrl', 'c')
     time.sleep(0.1)
@@ -36,3 +37,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

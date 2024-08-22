@@ -10,7 +10,6 @@ from PIL import Image
 from enum import Enum
 
 
-
 class Defect(Enum):
     HOLE = 0
     VERTICAL = 1

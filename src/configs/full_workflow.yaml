@@ -1,0 +1,17 @@
+spattering:
+  min_dist: 0
+  max_points: 400
+  max_spread: 10
+  darkest_gray: 160
+  lightest_gray: 170
+harmonization:
+  config: configs/harmonization.yaml
+synthetic:
+  n_samples: 500
+  config: harmonization_synthetic.yaml
+classification:
+  config: configs/resnet.yaml
+tensorboard:
+  log_dir: log
+  port: 21000
+  

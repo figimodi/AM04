@@ -82,3 +82,4 @@ if __name__ == '__main__':
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)
+
