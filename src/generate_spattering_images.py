@@ -64,19 +64,19 @@ if __name__ == '__main__':
         current_nodefect.paste(spattering, (0, 0), spattering_mask) 
         
         #save grountruth spattering image
-        newdefect_spattering_foldername=f'Image{START_SPATTERING_INDEX+i}'
-        newdefect_spattering_filename=f'{newdefect_spattering_foldername}.jpg'
-        os.makedirs(os.path.join(DEFECTS_PATH, newdefect_spattering_foldername), exist_ok=True)
-        newdefect_spattering_path = os.path.join(DEFECTS_PATH, newdefect_spattering_foldername)
+        foldername=f'Image{START_SPATTERING_INDEX+i}'
+        
+        newdefect_spattering_filename=f'{foldername}.jpg'
+        os.makedirs(os.path.join(DEFECTS_PATH, foldername), exist_ok=True)
+        newdefect_spattering_path = os.path.join(DEFECTS_PATH, foldername)
         current_nodefect.save(os.path.join(newdefect_spattering_path, newdefect_spattering_filename))
         
         #save spattering masks
-        newdefect_mask_foldername = newdefect_spattering_foldername
-        newdefect_mask_filename = f'{newdefect_mask_foldername}_PD_01_Spattering.png'
-        newdefect_mask_union_filename = f'{newdefect_mask_foldername}_Mask_01.png'
-        os.makedirs(os.path.join(DEFECTS_MASKS_PATH, newdefect_mask_foldername), exist_ok=True)
-        spattering_mask.save(os.path.join(DEFECTS_MASKS_PATH, newdefect_mask_foldername, newdefect_mask_filename))
-        spattering_mask.save(os.path.join(DEFECTS_MASKS_PATH, newdefect_mask_foldername, newdefect_mask_union_filename))
+        newdefect_mask_filename = f'{foldername}_PD_01_Spattering.png'
+        newdefect_mask_union_filename = f'{foldername}_Mask_01.png'
+        os.makedirs(os.path.join(DEFECTS_MASKS_PATH, foldername), exist_ok=True)
+        spattering_mask.save(os.path.join(DEFECTS_MASKS_PATH, foldername, newdefect_mask_filename))
+        spattering_mask.save(os.path.join(DEFECTS_MASKS_PATH, foldername, newdefect_mask_union_filename))
         
         print(f'{i+1}/{N_SPATTERING_IMAGES}', end='\r')
         
