@@ -69,12 +69,19 @@ class HarmonizationDataset(Dataset):
 
                     img_name = img_metadata[0]
                     img_mask_id = int(img_metadata[2])
-                    
+
+                    mask_image = [s for s in defect_masks[img_name] if ('CB' in s.split('_')[-2] and img_mask_id == int(s.split('_')[-1].split('.')[0])) or ('CB' not in s.split('_')[-2] and img_mask_id == int(s.split('_')[-2]))][0]
+
+                    if 'CB' in mask_image.split('_')[-2]:
+                        assert img_mask_id == int(mask_image.split('_')[-1].split('.')[0])
+                    else:
+                        assert img_mask_id == int(mask_image.split('_')[-2])
+
                     data.append(
                         {
                             'original_image': original_image_path,
                             'fake_image': os.path.join(image_folder_path, fake_image),
-                            'mask_image': defect_masks[img_name][img_mask_id - 1]
+                            'mask_image': mask_image,
                         }
                     )
 

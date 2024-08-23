@@ -58,7 +58,7 @@ if __name__ == '__main__':
     START_SPATTERING_INDEX = 50
     END_TRUE_MASK_INDEX = 47
     
-    clear_old_spattering_generations(END_TRUE_MASK_INDEX, DEFECTS_MASKS_PATH, DEFECTS_PATH)
+    # clear_old_spattering_generations(END_TRUE_MASK_INDEX, DEFECTS_MASKS_PATH, DEFECTS_PATH)
 
     list_nodefects_paths = [ os.path.join(NODEFECTS_PATH, image_name) for image_name in os.listdir(NODEFECTS_PATH) if image_name.endswith('.jpg') ]    
     
