@@ -147,3 +147,12 @@ class HarmonizationModule(LightningModule):
             return [optimizers], scheduler
         return [optimizers]
         
+    def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
+        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            previous_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
+            scheduler.step(metric)
+            new_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
+            if new_lr != previous_lr:
+                self.log('lr', new_lr, prog_bar=True, logger=True)
+        else:
+            super().lr_scheduler_step(scheduler, optimizer_idx, metric)

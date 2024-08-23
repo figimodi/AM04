@@ -43,7 +43,6 @@ if __name__ == '__main__':
         module = HarmonizationModule.load_from_checkpoint(
             name=config.model.name,
             map_location='cpu',
-            name = config.model.name,
             checkpoint_path=config.model.pretrained,
             epochs=config.model.epochs,
             lr=config.model.learning_rate,
