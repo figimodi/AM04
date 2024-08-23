@@ -7,30 +7,18 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 
-def generate_random_points(mask, min_dist, max_points, density_factor=5, outside_bias=0.3, max_outside_dist=0.1): 
-    white_coords = np.column_stack(np.where(mask == 255)) 
-    if len(white_coords) == 0: 
-        return [] 
- 
-    center = np.array([mask.shape[0] // 2, mask.shape[1] // 2]) 
-    distances_from_center = np.linalg.norm(white_coords - center, axis=1) 
-    inverted_distances = np.max(distances_from_center) - distances_from_center + 1e-6 
-    biased_distances = inverted_distances ** density_factor 
-    probabilities = biased_distances / np.sum(biased_distances) 
+def generate_random_points(min_dist, max_points): 
+    min_c, max_c = 500, 1040
+    min_r, max_r = 330, 700
+    
+    max_points = random.randint(max_points-100, max_points+100)
+    
+    center = np.array([random.randint(min_r, max_r), random.randint(min_c, max_c)])
+    
     points = [] 
-    attempts = 0 
      
-    while len(points) < max_points and attempts < max_points * 10: 
-        if np.random.rand() < outside_bias: 
-            while True: 
-                candidate_point = np.random.randint(0, mask.shape[0]), np.random.randint(0, mask.shape[1]) 
-                dist_from_center = np.linalg.norm(np.array(candidate_point) - center) / np.linalg.norm(center) 
-                 
-                if dist_from_center <= max_outside_dist: 
-                    break 
-        else: 
-            idx = np.random.choice(len(white_coords), p=probabilities) 
-            candidate_point = white_coords[idx] 
+    while len(points) < max_points : 
+        candidate_point = int(np.random.normal(center[0], random.randint(20,70))), int(np.random.normal(center[1], random.randint(20,70)))
          
         if len(points) == 0: 
             points.append(candidate_point) 
@@ -38,27 +26,12 @@ def generate_random_points(mask, min_dist, max_points, density_factor=5, outside
             distances = cdist([candidate_point], points) 
             if np.all(distances >= min_dist): 
                 points.append(candidate_point) 
-         
-        attempts += 1 
      
     return points
 
 def proliferate_points_randomly(image, points, max_spread, darkest_gray, lightest_gray, new_origin_threshold: float = 0.7):
-    """
-    Proliferate points in an image randomly, using RGB format.
-    
-    Args:
-    - image: The image where points are to be proliferated (RGB format).
-    - points: List of (x, y) tuples representing the points.
-    - max_spread: Maximum number of times a point can proliferate.
-    - darkest_gray: Darkest gray level (0-255) for the points.
-    - lightest_gray: Lightest gray level (0-255) for the points.
-    
-    Returns:
-    - image: The updated RGB image with proliferated points.
-    """
-    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), 
-                  (-1, -1), (-1, 1), (1, -1), (1, 1)]  # 8 possible directions
+
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]  # 8 possible directions
     directions_weights = [0.2, 0.2, 0.2, 0.2, 0.05, 0.05, 0.05, 0.05]
     for point in points:
         x, y = point
@@ -90,27 +63,12 @@ def proliferate_points_randomly(image, points, max_spread, darkest_gray, lightes
 
     return image
 
-def generate_images_with_random_proliferation(mask, min_dist, max_points, max_spread, darkest_gray, lightest_gray):
-    """
-    Generate two images based on the input mask: one with random RGB proliferation and another binary image.
-    
-    Args:
-    - mask: Binary mask where white areas are valid for point placement.
-    - min_dist: Minimum distance between points.
-    - max_points: Maximum number of points to generate.
-    - max_spread: Maximum number of times a point can proliferate.
-    - darkest_gray: Darkest gray level (0-255) for the points.
-    - lightest_gray: Lightest gray level (0-255) for the points.
-    
-    Returns:
-    - gray_image_rgb: The image with gray points in RGB and random proliferation.
-    - binary_image: The binary image where proliferation areas are white and the rest is black.
-    """
+def generate_images_with_random_proliferation(min_dist, max_points, max_spread, darkest_gray, lightest_gray):
     # Generate random points on the white areas of the mask
-    points = generate_random_points(mask, min_dist, max_points)
+    points = generate_random_points(min_dist, max_points)
     
     # Create an empty RGB image for proliferation
-    gray_image_rgb = np.ones((*mask.shape, 3), dtype=np.uint8)*255
+    gray_image_rgb = np.ones((1024, 1280, 3), dtype=np.uint8)*255
     
     # Proliferate points on the RGB image randomly
     gray_image_rgb = proliferate_points_randomly(gray_image_rgb, points, max_spread, darkest_gray, lightest_gray)
