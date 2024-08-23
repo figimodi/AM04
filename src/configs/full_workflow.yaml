@@ -9,7 +9,7 @@ harmonization:
 synthetic:
   n_samples: 500
   config: configs/harmonization_synthetic.yaml
-  pretrained: log/train_harmonization/version_1/epoch=197_val_loss=0.00001202.ckpt
+  # pretrained: log/train_harmonization/version_1/epoch=197_val_loss=0.00001202.ckpt
   generate: True
 classification:
   config: configs/resnet.yaml

@@ -82,16 +82,16 @@ class HarmonizationModule(LightningModule):
             for sample in range(min(y.shape[0], 10)):
                 fig, axes = plt.subplots(1, 3, figsize=(12, 6))
 
-                # Display the artifact image (assuming y is in [batch_size, 3, height, width] format)
-                im1 = axes[0].imshow(y[sample].permute(1, 2, 0).cpu().numpy())
-                axes[0].set_title('Artifact Image')
+                # Display the artifact image (assuming y is in [batch_size, 1, height, width] format)
+                im1 = axes[0].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+                axes[0].set_title('Color Manipulated Image (input)')
 
-                # Display the original image (assuming original_image is in [batch_size, 3, height, width] format)
-                im2 = axes[1].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy())
-                axes[1].set_title('Original Image')
+                # Display the original image (assuming original_image is in [batch_size, 1, height, width] format)
+                im2 = axes[1].imshow(y[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
+                axes[1].set_title('Harmonized Image (output)')
                 
-                im3 = axes[2].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy())
-                axes[2].set_title('Fake Image')
+                im3 = axes[2].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
+                axes[2].set_title('Target Image (ground truth)')
 
                 plt.suptitle(f'Comparison {i+1}_{sample+1}')
 
@@ -99,7 +99,7 @@ class HarmonizationModule(LightningModule):
                 
                 # Copy the buffer to make it writable
                 plot_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                plot_image = plot_image.copy()  # Make the buffer writable
+                plot_image = plot_image.copy()
                 plot_image = torch.from_numpy(plot_image)
                 plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 

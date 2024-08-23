@@ -45,7 +45,7 @@ class HarmonizationDataset(Dataset):
         # Create the dictionary with the paths of masks {"ImageX" : [mask_path_K,...]}
         defect_masks = defaultdict(list)
         # Append defect masks
-        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img_name, img)) for img_name in os.listdir(defects_masks_folder) for img in os.listdir(os.path.join(defects_masks_folder, img_name)) if (img.endswith(".jpg") or img.endswith(".png")) and '_L_' not in img ]
+        [defect_masks[img.split("_")[0]].append(os.path.join(defects_masks_folder, img_name, img)) for img_name in os.listdir(defects_masks_folder) for img in os.listdir(os.path.join(defects_masks_folder, img_name)) if (img.endswith(".jpg") or img.endswith(".png")) and 'Mask' not in img ]
 
         for img_name in defect_masks.keys():
             defect_masks[img_name].sort(key=lambda x: int(os.path.basename(x).split("_")[2].split(".")[0]))
@@ -69,12 +69,19 @@ class HarmonizationDataset(Dataset):
 
                     img_name = img_metadata[0]
                     img_mask_id = int(img_metadata[2])
-                    
+
+                    mask_image = [s for s in defect_masks[img_name] if ('CB' in s.split('_')[-2] and img_mask_id == int(s.split('_')[-1].split('.')[0])) or ('CB' not in s.split('_')[-2] and img_mask_id == int(s.split('_')[-2]))][0]
+
+                    if 'CB' in mask_image.split('_')[-2]:
+                        assert img_mask_id == int(mask_image.split('_')[-1].split('.')[0])
+                    else:
+                        assert img_mask_id == int(mask_image.split('_')[-2])
+
                     data.append(
                         {
                             'original_image': original_image_path,
                             'fake_image': os.path.join(image_folder_path, fake_image),
-                            'mask_image': defect_masks[img_name][img_mask_id]
+                            'mask_image': mask_image,
                         }
                     )
 
