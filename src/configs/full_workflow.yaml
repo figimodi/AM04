@@ -9,6 +9,7 @@ harmonization:
 synthetic:
   n_samples: 500
   config: harmonization_synthetic.yaml
+  pretrained: none
 classification:
   config: configs/resnet.yaml
 tensorboard:
