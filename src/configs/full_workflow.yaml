@@ -8,7 +8,7 @@ harmonization:
   config: configs/harmonization.yaml
 synthetic:
   n_samples: 500
-  config: harmonization_synthetic.yaml
+  config: configs/harmonization_synthetic.yaml
   pretrained: none
   generate: True
 classification:
