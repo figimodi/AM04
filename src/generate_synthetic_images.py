@@ -30,7 +30,7 @@ def delete_old_files():
         file_path = os.path.join(PATH_TO_SYNTHETIC_MASKS, fn)
         os.remove(file_path)        
                     
-    print('Old color transferred images deleted!')
+    print('Old synthetic images deleted!')
 
 # Keeps a square that extactly contains true points of the mask
 def crop_image(image):
