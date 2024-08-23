@@ -14,13 +14,18 @@ class SpatteringConfig(BaseModel):
     darkest_gray: int
     lightest_gray: int
 
-class ModelConfig(BaseModel):
+class HarmonizationConfig(BaseModel):
     config: Path
+
+class ClassificationConfig(BaseModel):
+    config: Path
+    classify: Optional[bool] = True
 
 class SyntheticConfig(BaseModel):
     n_samples: int
     config: Path
     pretrained: Optional[Path] = None
+    generate: Optional[bool] = True
 
 class TensorboardConfig(BaseModel):
     log_dir: Path
@@ -28,9 +33,9 @@ class TensorboardConfig(BaseModel):
 
 class Config(BaseModel):
     spattering: SpatteringConfig
-    harmonization: ModelConfig
+    harmonization: HarmonizationConfig
     synthetic: SyntheticConfig
-    classification: ModelConfig
+    classification: ClassificationConfig
     tensorboard: TensorboardConfig
 
 def launch_scripts(venv, scripts):
@@ -85,24 +90,26 @@ if __name__ == '__main__':
 
         best_model= os.path.join('log/train_harmonization/version_1/', best_model)
 
-    # Generate synthetic images and pass them through pretrained TSAI network
-    harmoninaztion_synthetic = [
-        ['generate_synthetic_images.py', '--tot_samples', str(config.synthetic.n_samples)],
-        ['harmonize_synthetic_images.py',
-            '--config', str(config.synthetic.config),
-            '--only_test',
-            '--pretrained', str(best_model)],
-    ]
+    if config.synthetic.generate:
+        # Generate synthetic images and pass them through pretrained TSAI network
+        harmoninaztion_synthetic = [
+            ['generate_synthetic_images.py', '--tot_samples', str(config.synthetic.n_samples)],
+            ['harmonize_synthetic_images.py',
+                '--config', str(config.synthetic.config),
+                '--only_test',
+                '--pretrained', str(best_model)],
+        ]
 
-    launch_scripts(venv, harmoninaztion_synthetic)
+        launch_scripts(venv, harmoninaztion_synthetic)
 
-    # Train classifier on the augmented dataset
-    classification = [
-        ['train_classifier.py', '--config', str(config.classification.config)],
-        ['tensorboard', 
-            '--logdir', str(config.classification.log_dir),
-            '--port', str(config.classification.port)],
-    ]
+    if config.classification.classify:
+        # Train classifier on the augmented dataset
+        classification = [
+            ['train_classifier.py', '--config', str(config.classification.config)],
+            ['tensorboard', 
+                '--logdir', str(config.classification.log_dir),
+                '--port', str(config.classification.port)],
+        ]
 
-    launch_scripts(venv, classification)
-        
+        launch_scripts(venv, classification)
+            

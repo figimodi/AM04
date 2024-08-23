@@ -10,8 +10,10 @@ synthetic:
   n_samples: 500
   config: harmonization_synthetic.yaml
   pretrained: none
+  generate: True
 classification:
   config: configs/resnet.yaml
+  classify: True
 tensorboard:
   log_dir: log
   port: 21000
