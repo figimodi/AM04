@@ -22,6 +22,23 @@ def clear_old_spattering_generations(end_true_masks, defects_masks_path, defects
             
     print("Old spattering generations deleted!")
 
+def dumb_harmonization(background, spattering, mask_spattering):
+    # Ensure inputs are numpy arrays
+    background = np.asarray(background, dtype=np.float32)
+    spattering = np.asarray(spattering, dtype=np.float32)
+    mask_spattering = np.asarray(mask_spattering, dtype=np.float32)
+    
+    # Calculate the difference between the spattering intensity and the background intensity
+    intensity_difference = np.abs(spattering - background)
+    
+    # Threshold to determine when to increase contrast
+    similarity_threshold = 10  # Adjust this value to define "enough similar"
+    
+    spattering[intensity_difference<=similarity_threshold] *= .9
+    spattering = np.clip(spattering, 0, 255)
+    
+    return spattering.astype(np.uint8)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate synthetic images')
     parser.add_argument('--min_dist', type=int, help='Minimum distance between points', dest='MIN_DIST', default=0)    
@@ -51,11 +68,17 @@ if __name__ == '__main__':
     for i in range(N_SPATTERING_IMAGES):
         current_nodefect_path = random.choice(list_nodefects_paths)
         
-        current_nodefect = Image.open(current_nodefect_path).convert('RGB')
+        current_nodefect = Image.open(current_nodefect_path).convert('L')
         
         spattering, spattering_mask = generate_images_with_random_proliferation(
             min_dist=args.MIN_DIST, max_points=args.MAX_POINTS, max_spread=args.MAX_SPREAD, darkest_gray=args.DARKEST_GRAY, lightest_gray=args.LIGHTEST_GRAY
         )
+        
+        spattering = np.array(Image.fromarray(spattering).convert('L'))
+        
+        spattering = dumb_harmonization(np.array(current_nodefect), spattering, spattering_mask)
+        
+        current_nodefect.convert('RGB')
         
         spattering = Image.fromarray(spattering).convert('RGB')
         spattering_mask = Image.fromarray(spattering_mask).convert('L')
