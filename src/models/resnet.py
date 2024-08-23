@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision.models as models
 from torchvision.models.resnet import ResNet, BasicBlock, Bottleneck
 
+
 class ResNet18(ResNet):
     def __init__(self):
         # Initialize the inherited ResNet class with the BasicBlock and layers configuration for ResNet-18
@@ -52,4 +53,3 @@ class ResNet152(ResNet):
 
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
         self.fc = nn.Linear(self.fc.in_features, 5)
-

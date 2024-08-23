@@ -8,6 +8,7 @@ from modules import ClassificationModule
 import yaml
 import os
 
+
 if __name__ == '__main__':
     # Get configuration arguments
     parser = Parser()

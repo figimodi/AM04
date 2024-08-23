@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 import argparse
 
+
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_TO_MASKS = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
 PATH_TO_DEFECTS = os.path.join(ROOT_DIR, 'data', 'Defects')
@@ -142,3 +143,4 @@ if __name__ == '__main__':
     os.makedirs(PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED, exist_ok=True)
     delete_old_files()
     main(samples_number_per_defect=args.N_SAMPLES//5)
+    

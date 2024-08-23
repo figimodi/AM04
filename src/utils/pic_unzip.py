@@ -3,6 +3,7 @@ import zipfile
 import re
 import sys
 
+
 def unzip_and_rename(zip_folder_path):
     for root, dirs, files in os.walk(zip_folder_path):
         for file in files:

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class GrayVGG16(nn.Module):
     def __init__(self, in_dim = 1, num_classes = 1000):
         super(GrayVGG16, self).__init__()
@@ -175,3 +176,4 @@ class GrayVGG16_BN(nn.Module):
         pool5 = pool5.view(x.size(0), -1)                   # shape: [B, 512 * 7 * 7]
         x = self.classifier(pool5)                          # shape: [B, 1000]
         return x
+        

@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import numpy as np
 import torch.nn.utils as torch_utils
 
+
 class LeNet5(nn.Module):
 
     # network structure
@@ -25,3 +26,4 @@ class LeNet5(nn.Module):
         x = self.fc3(x)
         
         return x
+        

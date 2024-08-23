@@ -6,6 +6,7 @@ from scipy.spatial.distance import cdist
 from PIL import Image
 import matplotlib.pyplot as plt
 
+
 def generate_random_points(mask, min_dist, max_points, density_factor=5, outside_bias=0.3, max_outside_dist=0.1): 
     white_coords = np.column_stack(np.where(mask == 255)) 
     if len(white_coords) == 0: 

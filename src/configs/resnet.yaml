@@ -17,3 +17,4 @@ checkpoint:
   monitor: val_loss
   save_top_k: 3
   mode: min
+  
