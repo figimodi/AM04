@@ -64,14 +64,17 @@ def main():
             all_current_defect_masks = []
             all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_01.png')])
         
+        highest_mask_id = max([int(mask_filename.split('_')[2].split('.')[0]) for mask_filename in current_defect_masks])
+
+        cb_counter = 0
         # for each mask apply the resulting mask and color transfer
         for i_acdm, mask_filename_comb in enumerate(all_current_defect_masks):
             
-            current_pd = -1
+            mask_id = None
             
             if len(mask_filename_comb) == 1: 
                 mask_path = os.path.join(PATH_MASK, mask_filename_comb[0])
-                current_pd = int(mask_filename_comb[0].split('_')[2].split('.')[0])
+                mask_id = int(mask_filename_comb[0].split('_')[2].split('.')[0])
                 mask = Image.open(mask_path).convert("L")                     
             else:
                 mask_paths = [os.path.join(PATH_MASK, mask_filename_comb[i_mfc]) for i_mfc in range(len(mask_filename_comb))] 
@@ -84,7 +87,11 @@ def main():
 
                 mask = Image.fromarray(final_mask).convert("L")
                 
-                mask.save(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_CB_{i_acdm+1}.png'))
+                mask_id = highest_mask_id+cb_counter+1
+                
+                cb_counter += 1
+                
+                mask.save(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_CB_{mask_id}.png'))
 
             defect_path = os.path.join(PATH_DEFECTS, defect_folder, f'{defect_folder}.jpg')
             
@@ -93,7 +100,7 @@ def main():
             manipulated_defects = apply_color_transfer(defect, mask)
             
             for i_md, md in enumerate(manipulated_defects):
-                md.save(os.path.join(PATH_DEFECTS, defect_folder ,f'{defect_folder}_CT_{current_pd if current_pd >= 0 else i_acdm + 1}_{i_md}.jpg'))
+                md.save(os.path.join(PATH_DEFECTS, defect_folder ,f'{defect_folder}_CT_{mask_id}_{i_md}.jpg'))
                 
         print(f'{i_df+1}/{len(defect_folders)}', end='\r')
         
