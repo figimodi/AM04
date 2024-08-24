@@ -86,7 +86,7 @@ class ClassificationModule(LightningModule):
                 fig, ax = plt.subplots(figsize=(6, 6))
 
                 # Display the image
-                ax.imshow(image[idx].permute(1, 2, 0).cpu().numpy())
+                ax.imshow(image[idx].permute(1, 2, 0).cpu().numpy(), cmap='gray')
                 ax.set_title('Input Image')
 
                 # Determine if prediction is correct

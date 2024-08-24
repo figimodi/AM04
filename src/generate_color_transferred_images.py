@@ -54,14 +54,11 @@ def main():
         if len(current_defect_masks) > 4:
             all_current_defect_masks.extend(combinations(current_defect_masks, 1))
         else:
-            for i_cdm in range(1, len(current_defect_masks)):
+            for i_cdm in range(1, 2 if len(current_defect_masks) == 1 else len(current_defect_masks)):
                 mask_combinations_i_cdm = combinations(current_defect_masks, i_cdm)    
                 all_current_defect_masks.extend(mask_combinations_i_cdm) # list of sublists (each sublist tells the combination of defect masks)
                 
         if len(current_defect_masks) > 1 and os.path.isfile(os.path.join(PATH_MASK, defect_folder, f'{defect_folder}_Mask_01.png')):
-            all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_01.png')])
-        else:
-            all_current_defect_masks = []
             all_current_defect_masks.append([os.path.join(defect_folder, f'{defect_folder}_Mask_01.png')])
         
         highest_mask_id = max([int(mask_filename.split('_')[2].split('.')[0]) for mask_filename in current_defect_masks])
@@ -108,6 +105,6 @@ def main():
     
 
 if __name__ == "__main__":
-    delete_old_files()
+    # delete_old_files()
     main()
     

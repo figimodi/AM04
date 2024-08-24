@@ -51,7 +51,7 @@ class HarmonizationModule(LightningModule):
         return torch.nn.functional.mse_loss(y, original_image)
 
     def training_step(self, batch):
-        original_image, fake_image, defect_type = batch
+        original_image, fake_image, defect_type, mask = batch
         batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
@@ -59,7 +59,7 @@ class HarmonizationModule(LightningModule):
         return {"loss": loss}
     
     def validation_step(self, batch):
-        original_image, fake_image, defect_type = batch
+        original_image, fake_image, defect_type, mask = batch
         batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
@@ -67,31 +67,36 @@ class HarmonizationModule(LightningModule):
         return {"loss": loss}
     
     def test_step(self, batch):
-        original_image, fake_image, defect_type = batch
+        original_image, fake_image, defect_type, mask = batch
         y = self.net(fake_image)
-        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image), defect_type))
+        self.test_outputs.append((torch.Tensor(mask), torch.Tensor(fake_image), torch.Tensor(y), torch.Tensor(original_image), defect_type))
         return None
 
     def on_test_epoch_end(self):
-        for i, (y, original_image, fake_image, defect_type) in enumerate(self.test_outputs):
+        for i, (mask, fake_image, y, original_image, defect_type) in enumerate(self.test_outputs):
             if self.save_images:
                 # Save each image in the batch
                 for z in range(y.shape[0]):
                     save_image(y[z], os.path.join(self.save_images, f'image_{i}_{z}_{defect_type[z]}.png'))
             
             for sample in range(min(y.shape[0], 10)):
-                fig, axes = plt.subplots(1, 3, figsize=(12, 6))
+                fig, axes = plt.subplots(1, 4, figsize=(15, 6))
 
-                # Display the artifact image (assuming y is in [batch_size, 1, height, width] format)
-                im1 = axes[0].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
-                axes[0].set_title('Color Manipulated Image (input)')
+                # Display the mask
+                im1 = axes[0].imshow(mask[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+                axes[0].set_title('Mask')
 
-                # Display the original image (assuming original_image is in [batch_size, 1, height, width] format)
-                im2 = axes[1].imshow(y[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
-                axes[1].set_title('Harmonized Image (output)')
+                # Display the artifact image 
+                im2 = axes[1].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+                axes[1].set_title('Color Manipulated Image (input)')
                 
-                im3 = axes[2].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
-                axes[2].set_title('Target Image (ground truth)')
+                # Display the original image 
+                im3 = axes[2].imshow(y[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
+                axes[2].set_title('Harmonized Image (output)')
+
+                # Display the target image
+                im3 = axes[3].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
+                axes[3].set_title('Target Image (ground truth)')
 
                 plt.suptitle(f'Comparison {i+1}_{sample+1}')
 
@@ -108,7 +113,7 @@ class HarmonizationModule(LightningModule):
 
                 plt.close(fig)
 
-        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _, _ in self.test_outputs]).mean()
+        loss = torch.tensor([self.loss_function(y, original_image) for _, _, y, original_image, _ in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
