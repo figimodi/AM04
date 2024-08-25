@@ -41,7 +41,7 @@ class ClassificationModule(LightningModule):
         elif name == 'lenet5':
             self.model = LeNet5()
         else:
-            raise ValueError(f'Network {name} not available')
+            raise ValueError(f'Network {name} not available.')
 
         # Training params
         self.epochs = epochs

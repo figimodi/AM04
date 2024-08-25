@@ -25,7 +25,12 @@ class HarmonizationModule(LightningModule):
         self.save_hyperparameters()
 
         # Network
-        self.net = TSAINetworkV1()
+        if name == 'tsaiv1':
+            self.net = TSAINetworkV1()
+        elif name == 'tsaiv2':
+            self.net = TSAINetworkV2()
+        else:
+            raise ValueError(f'Network {name} not available.')
 
         # Training params
         self.epochs = epochs

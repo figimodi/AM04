@@ -37,6 +37,7 @@ class Config(BaseModel):
     synthetic: SyntheticConfig
     classification: ClassificationConfig
     tensorboard: TensorboardConfig
+    version: int
 
 def launch_scripts(venv, scripts):
     for script in scripts:
@@ -52,6 +53,7 @@ def launch_scripts(venv, scripts):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-c', '--config', type=Path, help='Configuration Path', required=True, dest='CONFIG')
+    parser.add_argument('-v', '--version', type=int, help='Version of the project', dest='VERSION')
     args = parser.parse_args()
 
     # Set path to the python executable, leave 'python' if you're not using any venv
@@ -61,6 +63,9 @@ if __name__ == '__main__':
         d = yaml.safe_load(f)
         config = Config(**d)
    
+    if args.VERSION is not None:
+        config.version = args.VERSION
+
     try:
         if config.synthetic.pretrained:
             # Load already pretrained TSAI network
@@ -76,20 +81,20 @@ if __name__ == '__main__':
                     '--darkest_gray', str(config.spattering.darkest_gray),
                     '--lightest_gray', str(config.spattering.lightest_gray)],
                 'generate_color_transferred_images.py',
-                ['train_harmonization.py', '--config', str(config.harmonization.config)],
+                ['train_harmonization.py', '--config', str(config.harmonization.config), '--version', str(config.version)],
             ]
 
             launch_scripts(venv, harmoninaztion_training) 
 
             best_loss = 1e9
             best_model= None
-            for file in os.listdir('./log/train_harmonization/version_1'):
+            for file in os.listdir(f'./log/train_harmonization/version_{config.version}'):
                 if 'val_loss' in file:
                     loss = int(file.split('.')[-2])
                     if loss < best_loss:
                         best_model= file
 
-            best_model= os.path.join('log/train_harmonization/version_1/', best_model)
+            best_model= os.path.join(f'log/train_harmonization/version_{config.version}/', best_model)
 
         if config.synthetic.generate:
             # Generate synthetic images and pass them through pretrained TSAI network
@@ -98,7 +103,8 @@ if __name__ == '__main__':
                 ['harmonize_synthetic_images.py',
                     '--config', str(config.synthetic.config),
                     '--only_test',
-                    '--pretrained', str(best_model)],
+                    '--pretrained', str(best_model),
+                    '--version', str(config.version)],
             ]
 
             launch_scripts(venv, harmoninaztion_synthetic)
@@ -106,7 +112,7 @@ if __name__ == '__main__':
         if config.classification.classify:
             # Train classifier on the augmented dataset
             classification = [
-                ['train_classifier.py', '--config', str(config.classification.config)],
+                ['train_classifier.py', '--config', str(config.classification.config), '--version', str(config.version)],
             ]
 
             launch_scripts(venv, classification)
