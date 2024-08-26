@@ -17,13 +17,13 @@ def apply_color_transfer(image, mask):
     
     #TODO: choose better strategies
     strategies = [
-        (lambda: br_enhancer.enhance(.8)),
-        (lambda: br_enhancer.enhance(.9)),
-        (lambda: br_enhancer.enhance(1.1)),
-        (lambda: br_enhancer.enhance(1.2)),
         (lambda: co_enhancer.enhance(.8)),
+        (lambda: co_enhancer.enhance(.85)),
         (lambda: co_enhancer.enhance(.9)),
+        (lambda: co_enhancer.enhance(.95)),
+        (lambda: co_enhancer.enhance(1.05)),
         (lambda: co_enhancer.enhance(1.1)),
+        (lambda: co_enhancer.enhance(1.15)),
         (lambda: co_enhancer.enhance(1.2)),
     ]
     
