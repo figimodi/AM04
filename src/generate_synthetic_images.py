@@ -113,7 +113,7 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
                     
                     current_side_is_right = False if (x_start+x_end)//2 < 760 else True
                 
-                    if original_side_is_right != current_side_is_right and 'Vertical' in chosen_defect_type:
+                    if 'Vertical' in chosen_defect_type and original_side_is_right != current_side_is_right:
                         defect_mask = Image.fromarray(np.fliplr(defect_mask))
                         defect_image = Image.fromarray(np.fliplr(defect_image))
                         
