@@ -76,29 +76,35 @@ class ClassificationModule(LightningModule):
     def test_step(self, batch):
         image, label = batch
         prediction = self(image)
-        self.test_outputs.append((torch.Tensor(image), torch.Tensor(prediction), torch.Tensor(label)))
+
+        for i in range(image.shape[0]):
+            self.test_outputs.append((
+                image[i],
+                prediction[i],
+                label[i],
+                self.loss_function(prediction[i], label[i])    
+            ))  
+
         return None
 
     def on_test_epoch_end(self):
-        for i, (image, prediction, label) in enumerate(self.test_outputs):
-            batch_size = image.shape[0]
-            for idx in range(batch_size):
-                fig, ax = plt.subplots(figsize=(6, 6))
+        for i, (image, prediction, label, loss) in enumerate(self.test_outputs):
+            fig, ax = plt.subplots(figsize=(6, 6))
 
-                # Display the image
-                ax.imshow(image[idx].permute(1, 2, 0).cpu().numpy(), cmap='gray')
-                ax.set_title('Input Image')
+            # Display the image
+            ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
+            ax.set_title('Input Image')
 
-                # Determine if prediction is correct
-                predicted_class = torch.argmax(prediction[idx]).item()
-                correct_class = label[idx].item()
-                correct_prediction = (predicted_class == correct_class)
+            # Determine if prediction is correct
+            predicted_class = torch.argmax(prediction).item()
+            correct_class = label.item()
+            correct_prediction = (predicted_class == correct_class)
 
-                # Display prediction and label with color based on correctness
-                if correct_prediction:
-                    prediction_text_color = 'green'
-                else:
-                    prediction_text_color = 'red'
+            # Display prediction and label with color based on correctness
+            if correct_prediction:
+                continue
+            else:
+                prediction_text_color = 'red'
 
                 prediction_text = Defect(predicted_class).name
                 label_text = Defect(correct_class).name
@@ -106,7 +112,7 @@ class ClassificationModule(LightningModule):
                 ax.text(0.5, -0.1, f'Prediction: {prediction_text}', ha='center', va='center', transform=ax.transAxes, fontsize=12, color=prediction_text_color)
                 ax.text(0.5, -0.2, f'Label: {label_text}', ha='center', va='center', transform=ax.transAxes, fontsize=12, color='black')
 
-                plt.suptitle(f'Result {i+1}_{idx+1}')
+                plt.suptitle(f'Result {i+1}')
 
                 fig.canvas.draw()
 
@@ -117,13 +123,13 @@ class ClassificationModule(LightningModule):
                 plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
                 # Log the image to TensorBoard
-                self.logger.experiment.add_image(f'Comparison_{i+1}_{idx+1}.png', plot_image, self.current_epoch, dataformats='HWC')
+                self.logger.experiment.add_image(f'Comparison_{i+1}.png', plot_image, self.current_epoch, dataformats='HWC')
 
                 plt.close(fig)
 
         # Calculate the mean test loss
-        loss = torch.tensor([self.loss_function(prediction, label) for _, prediction, label in self.test_outputs]).mean()
-        top1 = np.array([item for batch in [(torch.argmax(prediction, dim=1)==label).tolist() for _, prediction, label in self.test_outputs] for item in batch]).mean()*100
+        loss = torch.tensor([sample[-1] for sample in self.test_outputs]).mean()
+        top1 = np.array([(torch.argmax(prediction, dim=0)==label).cpu() for _, prediction, label, _ in self.test_outputs]).mean()*100
         self.log('test_loss', loss, logger=True, prog_bar=True, on_step=False, on_epoch=True)
         self.log('test_top1', top1, logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
