@@ -74,51 +74,62 @@ class HarmonizationModule(LightningModule):
     def test_step(self, batch):
         original_image, fake_image, defect_type, mask = batch
         y = self.net(fake_image)
-        self.test_outputs.append((torch.Tensor(mask), torch.Tensor(fake_image), torch.Tensor(y), torch.Tensor(original_image), defect_type))
+
+        for i in range(original_image.shape[0]):
+            self.test_outputs.append((
+                mask[i],          
+                fake_image[i],     
+                y[i],              
+                original_image[i],
+                defect_type[i],  
+                self.loss_function(y[i], fake_image[i]),
+                self.loss_function(y[i], original_image[i])    
+            ))        
+
         return None
 
     def on_test_epoch_end(self):
-        for i, (mask, fake_image, y, original_image, defect_type) in enumerate(self.test_outputs):
+        # Sort examples by loss, to plot the best results obtained by the network
+        self.test_outputs.sort(key=lambda x: x[-2], reverse=True)
+
+        for i, (mask, fake_image, y, original_image, defect_type, change, loss) in enumerate(self.test_outputs[:10]):
             if self.save_images:
-                # Save each image in the batch
-                for z in range(y.shape[0]):
-                    save_image(y[z], os.path.join(self.save_images, f'image_{i}_{z}_{defect_type[z]}.png'))
+                save_image(y, os.path.join(self.save_images, f'image_{i}_{defect_type}.png'))
             
-            for sample in range(min(y.shape[0], 10)):
-                fig, axes = plt.subplots(1, 4, figsize=(15, 6))
+            fig, axes = plt.subplots(1, 4, figsize=(15, 6))
 
-                # Display the mask
-                im1 = axes[0].imshow(mask[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
-                axes[0].set_title('Mask')
+            # Display the mask
+            im1 = axes[0].imshow(mask.permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+            axes[0].set_title('Mask')
 
-                # Display the artifact image 
-                im2 = axes[1].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
-                axes[1].set_title('Color Manipulated Image (input)')
-                
-                # Display the original image 
-                im3 = axes[2].imshow(y[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
-                axes[2].set_title('Harmonized Image (output)')
+            # Display the artifact image 
+            im2 = axes[1].imshow(fake_image.permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+            axes[1].set_title('Color Manipulated Image (input)')
+            
+            # Display the original image 
+            im3 = axes[2].imshow(y.permute(1, 2, 0).cpu().numpy(), cmap='gray')
+            axes[2].set_title('Harmonized Image (output)')
 
-                # Display the target image
-                im3 = axes[3].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy(), cmap='gray')
-                axes[3].set_title('Target Image (ground truth)')
+            # Display the target image
+            im3 = axes[3].imshow(original_image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
+            axes[3].set_title('Target Image (ground truth)')
 
-                plt.suptitle(f'Comparison {i+1}_{sample+1}')
+            plt.suptitle(f'Comparison {i+1}')
 
-                fig.canvas.draw()
-                
-                # Copy the buffer to make it writable
-                plot_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                plot_image = plot_image.copy()
-                plot_image = torch.from_numpy(plot_image)
-                plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            fig.canvas.draw()
+            
+            # Copy the buffer to make it writable
+            plot_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            plot_image = plot_image.copy()
+            plot_image = torch.from_numpy(plot_image)
+            plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
-                # Log the image to TensorBoard
-                self.logger.experiment.add_image(f'Comparison_{i+1}_{sample+1}.png', plot_image, self.current_epoch, dataformats='HWC')
+            # Log the image to TensorBoard
+            self.logger.experiment.add_image(f'Comparison_{i+1}.png', plot_image, self.current_epoch, dataformats='HWC')
 
-                plt.close(fig)
+            plt.close(fig)
 
-        loss = torch.tensor([self.loss_function(y, original_image) for _, _, y, original_image, _ in self.test_outputs]).mean()
+        loss = torch.tensor([sample[-1] for sample in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
