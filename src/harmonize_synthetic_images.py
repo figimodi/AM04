@@ -32,6 +32,7 @@ if __name__ == '__main__':
     # Load pretrained model or else start from scratch
     if config.model.pretrained is None:
         module = HarmonizationModule(
+            name = config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
@@ -40,6 +41,7 @@ if __name__ == '__main__':
         )
     else:
         module = HarmonizationModule.load_from_checkpoint(
+            name=config.model.name,
             map_location='cpu',
             checkpoint_path=config.model.pretrained,
             epochs=config.model.epochs,
@@ -79,3 +81,4 @@ if __name__ == '__main__':
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)
+

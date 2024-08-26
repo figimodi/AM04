@@ -3,13 +3,14 @@ dataset:
   defects_masks_folder: ./../data/SyntheticDefectsMasks/
   splits: [0, 0, 1]
 model:
-  epochs: 5
+  name: tsaiv2
+  epochs: 1
   batch_size: 4
   learning_rate: 1e-4
   optimizer: adam
   scheduler: none
   save_images: ./../data/SyntheticDefectsHarmonized/
-  only_test: False
+  only_test: True
 logger:
   log_dir: ./log
   experiment_name: harmonize_synthetic_images
@@ -18,3 +19,4 @@ checkpoint:
   monitor: val_loss
   save_top_k: 3
   mode: min
+  

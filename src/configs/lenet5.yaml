@@ -2,16 +2,16 @@ dataset:
   synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
   splits: [.5, .25, .25]
 model:
-  name: resnet18
-  epochs: 200
-  batch_size: 8
+  name: lenet5
+  epochs: 50
+  batch_size: 4
   learning_rate: 1e-5
   optimizer: adam
-  scheduler: plteau
+  scheduler: none
   only_test: False
 logger:
   log_dir: ./log
-  experiment_name: train_resnet
+  experiment_name: train_lenet5
   version: 1
 checkpoint:
   monitor: val_loss

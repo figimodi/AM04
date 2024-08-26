@@ -1,5 +1,6 @@
 import torch
 import os
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
@@ -13,6 +14,7 @@ from models import TSAINetworkV1, TSAINetworkV2
 class HarmonizationModule(LightningModule):
     def __init__(
             self,
+            name: str,
             epochs: int,
             lr: float, 
             optimizer: str, 
@@ -23,7 +25,12 @@ class HarmonizationModule(LightningModule):
         self.save_hyperparameters()
 
         # Network
-        self.net = TSAINetworkV1()
+        if name == 'tsaiv1':
+            self.net = TSAINetworkV1()
+        elif name == 'tsaiv2':
+            self.net = TSAINetworkV2()
+        else:
+            raise ValueError(f'Network {name} not available.')
 
         # Training params
         self.epochs = epochs
@@ -33,6 +40,10 @@ class HarmonizationModule(LightningModule):
 
         # Additional params
         self.save_images = save_images
+        if self.save_images:
+            if os.path.exists(self.save_images):
+                shutil.rmtree(self.save_images)
+            os.mkdir(self.save_images)
 
         # Test outputs
         self.test_outputs = []
@@ -45,7 +56,7 @@ class HarmonizationModule(LightningModule):
         return torch.nn.functional.mse_loss(y, original_image)
 
     def training_step(self, batch):
-        original_image, fake_image, defect_type = batch
+        original_image, fake_image, defect_type, mask = batch
         batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
@@ -53,7 +64,7 @@ class HarmonizationModule(LightningModule):
         return {"loss": loss}
     
     def validation_step(self, batch):
-        original_image, fake_image, defect_type = batch
+        original_image, fake_image, defect_type, mask = batch
         batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
@@ -61,48 +72,64 @@ class HarmonizationModule(LightningModule):
         return {"loss": loss}
     
     def test_step(self, batch):
-        original_image, fake_image, defect_type = batch
+        original_image, fake_image, defect_type, mask = batch
         y = self.net(fake_image)
-        self.test_outputs.append((torch.Tensor(y), torch.Tensor(original_image), torch.Tensor(fake_image), defect_type))
+
+        for i in range(original_image.shape[0]):
+            self.test_outputs.append((
+                mask[i],          
+                fake_image[i],     
+                y[i],              
+                original_image[i],
+                defect_type[i],  
+                self.loss_function(y[i], fake_image[i]),
+                self.loss_function(y[i], original_image[i])    
+            ))        
+
         return None
 
     def on_test_epoch_end(self):
-        for i, (y, original_image, fake_image, defect_type) in enumerate(self.test_outputs):
+        # Sort examples by loss, to plot the best results obtained by the network
+        self.test_outputs.sort(key=lambda x: x[-2], reverse=True)
+
+        for i, (mask, fake_image, y, original_image, defect_type, change, loss) in enumerate(self.test_outputs[:10]):
             if self.save_images:
-                # Save each image in the batch
-                for z in range(y.shape[0]):
-                    save_image(y[z], os.path.join(self.save_images, f'image_{i}_{z}_{defect_type[z]}.png'))
+                save_image(y, os.path.join(self.save_images, f'image_{i}_{defect_type}.png'))
             
-            for sample in range(min(y.shape[0], 10)):
-                fig, axes = plt.subplots(1, 3, figsize=(12, 6))
+            fig, axes = plt.subplots(1, 4, figsize=(15, 6))
 
-                # Display the artifact image (assuming y is in [batch_size, 3, height, width] format)
-                im1 = axes[0].imshow(y[sample].permute(1, 2, 0).cpu().numpy())
-                axes[0].set_title('Artifact Image')
+            # Display the mask
+            im1 = axes[0].imshow(mask.permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+            axes[0].set_title('Mask')
 
-                # Display the original image (assuming original_image is in [batch_size, 3, height, width] format)
-                im2 = axes[1].imshow(original_image[sample].permute(1, 2, 0).cpu().numpy())
-                axes[1].set_title('Original Image')
-                
-                im3 = axes[2].imshow(fake_image[sample].permute(1, 2, 0)[:, :, 0].cpu().numpy())
-                axes[2].set_title('Fake Image')
+            # Display the artifact image 
+            im2 = axes[1].imshow(fake_image.permute(1, 2, 0)[:, :, 0].cpu().numpy(), cmap='gray')
+            axes[1].set_title('Color Manipulated Image (input)')
+            
+            # Display the original image 
+            im3 = axes[2].imshow(y.permute(1, 2, 0).cpu().numpy(), cmap='gray')
+            axes[2].set_title('Harmonized Image (output)')
 
-                plt.suptitle(f'Comparison {i+1}_{sample+1}')
+            # Display the target image
+            im3 = axes[3].imshow(original_image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
+            axes[3].set_title('Target Image (ground truth)')
 
-                fig.canvas.draw()
-                
-                # Copy the buffer to make it writable
-                plot_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-                plot_image = plot_image.copy()  # Make the buffer writable
-                plot_image = torch.from_numpy(plot_image)
-                plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+            plt.suptitle(f'Comparison {i+1}')
 
-                # Log the image to TensorBoard
-                self.logger.experiment.add_image(f'Comparison_{i+1}_{sample+1}.png', plot_image, self.current_epoch, dataformats='HWC')
+            fig.canvas.draw()
+            
+            # Copy the buffer to make it writable
+            plot_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            plot_image = plot_image.copy()
+            plot_image = torch.from_numpy(plot_image)
+            plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
-                plt.close(fig)
+            # Log the image to TensorBoard
+            self.logger.experiment.add_image(f'Comparison_{i+1}.png', plot_image, self.current_epoch, dataformats='HWC')
 
-        loss = torch.tensor([self.loss_function(y, original_image) for y, original_image, _, _ in self.test_outputs]).mean()
+            plt.close(fig)
+
+        loss = torch.tensor([sample[-1] for sample in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
@@ -141,3 +168,12 @@ class HarmonizationModule(LightningModule):
             return [optimizers], scheduler
         return [optimizers]
         
+    def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
+        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+            previous_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
+            scheduler.step(metric)
+            new_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
+            if new_lr != previous_lr:
+                self.log('lr', new_lr, prog_bar=True, logger=True)
+        else:
+            super().lr_scheduler_step(scheduler, optimizer_idx, metric)

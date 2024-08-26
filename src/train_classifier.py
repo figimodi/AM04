@@ -3,8 +3,8 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 from utils import Parser
-from datasets import HarmonizationDataset
-from modules import HarmonizationModule
+from datasets import ClassifierDataset
+from modules import ClassificationModule
 import yaml
 import os
 
@@ -15,10 +15,12 @@ if __name__ == '__main__':
     config, device = parser.parse_args()
 
     # Load sources
-    harmonization_dataset = HarmonizationDataset(defects_folder=config.dataset.defects_folder, defects_masks_folder=config.dataset.defects_masks_folder)
+    classifier_dataset = ClassifierDataset(
+        synthetized_defects_folder=config.dataset.synthetized_defects_folder,
+    )
 
     # Create train-val-test splits
-    splits = harmonization_dataset.create_splits(config.dataset.splits)
+    splits = classifier_dataset.create_splits(config.dataset.splits)
     train_split, val_split, test_split = splits
 
     # Instantiate Dataloaders for each split
@@ -31,31 +33,29 @@ if __name__ == '__main__':
 
     # Load pretrained model or else start from scratch
     if config.model.pretrained is None:
-        module = HarmonizationModule(
+        module = ClassificationModule(
             name=config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
             scheduler=config.model.scheduler,
-            save_images=config.model.save_images,
         )
     else:
-        module = HarmonizationModule.load_from_checkpoint(
-            name=config.model.name,
+        module = ClassificationModule.load_from_checkpoint(
             map_location='cpu',
             checkpoint_path=config.model.pretrained,
+            name=config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate,
             optimizer=config.model.optimizer,
             scheduler=config.model.scheduler,
-            save_images=config.model.save_images,
         )
 
     # Set callback function to save checkpoint of the model
     checkpoint_cb = ModelCheckpoint(
         monitor=config.checkpoint.monitor,
         dirpath=os.path.join(config.logger.log_dir, config.logger.experiment_name, f'version_{config.logger.version}'),
-        filename='{epoch:03d}_{' + config.checkpoint.monitor + ':.8f}',
+        filename='{epoch:03d}_{' + config.checkpoint.monitor + ':.6f}',
         save_weights_only=True,
         save_top_k=config.checkpoint.save_top_k,
         mode=config.checkpoint.mode,
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # Get the best checkpoint path and load the best checkpoint for testing
     best_checkpoint_path = checkpoint_cb.best_model_path
     if best_checkpoint_path:
-        module = HarmonizationModule.load_from_checkpoint(name=config.model.name, checkpoint_path=best_checkpoint_path)
+        module = ClassificationModule.load_from_checkpoint(name=config.model.name, checkpoint_path=best_checkpoint_path)
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)

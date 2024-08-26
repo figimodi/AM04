@@ -4,15 +4,13 @@ from typing import List, Optional, Union
 
     
 class DatasetConfig(BaseModel):
-    defects_folder: Path
-    defects_masks_folder: Path
-    splits: List[float]
-
-class ResNetDatasetConfig(BaseModel):
-    synthetized_defects_folder: Optional[Path]
+    defects_folder: Optional[Path] = None
+    defects_masks_folder: Optional[Path] = None
+    synthetized_defects_folder: Optional[Path] = None
     splits: List[float]
 
 class ModelConfig(BaseModel):
+    name: str
     epochs: int
     batch_size: int
     learning_rate: float
@@ -21,9 +19,6 @@ class ModelConfig(BaseModel):
     only_test: bool
     save_images: Optional[Path] = None
     pretrained: Optional[Path] = None
-
-class ResNetConfig(ModelConfig):
-    resnet_type: str
 
 class LoggerConfig(BaseModel):
     log_dir: Path
@@ -36,7 +31,7 @@ class CheckpointConfig(BaseModel):
     mode: str
 
 class Config(BaseModel):
-    dataset: Union[DatasetConfig, ResNetConfig]
-    model: Union[ResNetConfig, ModelConfig]
+    dataset: DatasetConfig
+    model: ModelConfig
     logger: LoggerConfig
     checkpoint: CheckpointConfig

@@ -1,5 +1,7 @@
 import os
+import torch
 import pandas as pd
+import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms
 from pathlib import Path
@@ -18,17 +20,48 @@ class Defect(Enum):
 class ClassifierDatasetSplit(Dataset):
     def __init__(self, data: pd.DataFrame):
         self.data = data
+        self.mean, self.std = self.__calculate_mean_std__()
 
     def __len__(self):
         return len(self.data)
     
     def __getitem__(self, idx):
-        transform = transforms.ToTensor()
+        # Define transformations
+        transform = transforms.Compose([
+            transforms.Resize((512, 512)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=self.mean, std=self.std)
+        ])
 
         sample = self.data.iloc[idx, :]
-        image = transform(Image.open(sample.image_path).convert('RGB').resize((256, 256)))
+        image = Image.open(sample.image_path).convert('L')
+        image = transform(image)
         label = sample.label
         return (image, label)
+
+    def __calculate_mean_std__(self):
+        transform = transforms.Compose([
+            transforms.Resize((512, 512)),
+            transforms.ToTensor()
+        ])
+        
+        means = []
+        stds = []
+        
+        for idx in range(len(self.data)):
+            sample = self.data.iloc[idx, :]
+            image = Image.open(sample.image_path).convert('L')
+            image = transform(image)
+            means.append(image.mean(dim=[1, 2]))
+            stds.append(image.std(dim=[1, 2]))
+        
+        mean = torch.stack(means).mean(dim=0).numpy()
+        std = torch.stack(stds).mean(dim=0).numpy()
+        
+        return mean, std
 
     def __iter__(self):
         for sample in self.data:

@@ -3,9 +3,10 @@ dataset:
   defects_masks_folder: ./../data/DefectsMasks/
   splits: [.5, .25, .25]
 model:
-  epochs: 50
+  name: tsaiv2
+  epochs: 200
   batch_size: 4
-  learning_rate: 1e-7
+  learning_rate: 1e-4
   optimizer: adam
   scheduler: plateau
   only_test: False
@@ -17,3 +18,4 @@ checkpoint:
   monitor: val_loss
   save_top_k: 3
   mode: min
+  

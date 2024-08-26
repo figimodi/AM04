@@ -2,6 +2,8 @@ import os
 import random
 from PIL import Image
 import numpy as np
+import argparse
+
 
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_TO_MASKS = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
@@ -28,7 +30,7 @@ def delete_old_files():
         file_path = os.path.join(PATH_TO_SYNTHETIC_MASKS, fn)
         os.remove(file_path)        
                     
-    print('Old color transferred images deleted!')
+    print('Old synthetic images deleted!')
 
 # Keeps a square that extactly contains true points of the mask
 def crop_image(image):
@@ -46,7 +48,7 @@ def get_pos_topleft(image):
 
 def main(samples_number_per_defect = 10, probability_few_defects = .8):
     # probability of having few defects against having many defects (few and many defined next)
-    masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename ]
+    masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename and not(int(mask_folder.split('Image')[-1]) < 50 and 'Spattering' in mask_filename ) ]
     nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg') or f.endswith('.png')]
     defect_types = list(set([f.split('_')[3].split('.')[0] for f in masks_paths]))
 
@@ -132,8 +134,13 @@ def main(samples_number_per_defect = 10, probability_few_defects = .8):
     print('Done!')
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generate synthetic images')
+    parser.add_argument('--tot_samples', type=int, help='Amount of synthetic images generated', required=True, dest='N_SAMPLES')    
+    args = parser.parse_args()
+
     os.makedirs(PATH_TO_SYNTHETIC, exist_ok=True)
     os.makedirs(PATH_TO_SYNTHETIC_MASKS, exist_ok=True)
     os.makedirs(PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED, exist_ok=True)
     delete_old_files()
-    main()
+    main(samples_number_per_defect=args.N_SAMPLES//5)
+    
