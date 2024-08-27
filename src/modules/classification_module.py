@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
-from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5, GrayVGG16_BN, GrayVGG16
+from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5, GrayVGG16_BN, GrayVGG16, GoogLeNet
 from datasets import Defect
 
 resnet_architectures = {
@@ -38,6 +38,8 @@ class ClassificationModule(LightningModule):
             self.model = resnet_architectures[name]()
         elif 'vgg' in name:
             self.model = vgg_architectures[name]()
+        elif namme == 'googlenet':
+            self.model = GoogLeNet()
         elif name == 'lenet5':
             self.model = LeNet5()
         else:
@@ -66,6 +68,11 @@ class ClassificationModule(LightningModule):
         self.log('train_loss', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
+    def on_train_epoch_end(self):
+        optimizer = self.optimizers()
+        lr = optimizer.param_groups[0]['lr']
+        self.log('lr', lr, prog_bar=True, on_epoch=True)
+
     def validation_step(self, batch):
         image, label = batch
         prediction = self(image)
@@ -89,12 +96,6 @@ class ClassificationModule(LightningModule):
 
     def on_test_epoch_end(self):
         for i, (image, prediction, label, loss) in enumerate(self.test_outputs):
-            fig, ax = plt.subplots(figsize=(6, 6))
-
-            # Display the image
-            ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
-            ax.set_title('Input Image')
-
             # Determine if prediction is correct
             predicted_class = torch.argmax(prediction).item()
             correct_class = label.item()
@@ -104,6 +105,11 @@ class ClassificationModule(LightningModule):
             if correct_prediction:
                 continue
             else:
+                fig, ax = plt.subplots(figsize=(6, 6))
+
+                # Display the image
+                ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
+                ax.set_title('Input Image')
                 prediction_text_color = 'red'
 
                 prediction_text = Defect(predicted_class).name
@@ -161,20 +167,10 @@ class ClassificationModule(LightningModule):
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=5, min_lr=1e-8, verbose=True)
             return  {
                         'optimizer': optimizers,
-                        'scheduler': scheduler,
+                        'lr_scheduler': scheduler,
                         'monitor': 'val_loss'
                     }
         
         if scheduler is not None:
             return [optimizers], scheduler
         return [optimizers]
-        
-    def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
-        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            previous_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
-            scheduler.step(metric)
-            new_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
-            if new_lr != previous_lr:
-                self.log('lr', new_lr, prog_bar=True, logger=True)
-        else:
-            super().lr_scheduler_step(scheduler, optimizer_idx, metric)

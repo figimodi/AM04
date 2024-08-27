@@ -63,6 +63,11 @@ class HarmonizationModule(LightningModule):
         self.log('train_loss', loss.item(), batch_size=batch_size, logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": loss}
     
+    def on_train_epoch_end(self):
+        optimizer = self.optimizers()
+        lr = optimizer.param_groups[0]['lr']
+        self.log('lr', lr, prog_bar=True, on_epoch=True)
+
     def validation_step(self, batch):
         original_image, fake_image, defect_type, mask = batch
         batch_size = original_image.shape[0]
@@ -82,20 +87,22 @@ class HarmonizationModule(LightningModule):
                 y[i],              
                 original_image[i],
                 defect_type[i],  
-                self.loss_function(y[i], fake_image[i]),
                 self.loss_function(y[i], original_image[i])    
             ))        
 
         return None
 
     def on_test_epoch_end(self):
-        # Sort examples by loss, to plot the best results obtained by the network
-        self.test_outputs.sort(key=lambda x: x[-2], reverse=True)
+        if self.save_images:
+            self.test_outputs.sort(key=lambda x: x[-1], reverse=True)
+        else:
+            self.test_outputs.sort(key=lambda x: x[-1])
 
-        for i, (mask, fake_image, y, original_image, defect_type, change, loss) in enumerate(self.test_outputs[:10]):
+        for i, (mask, fake_image, y, original_image, defect_type, loss) in enumerate(self.test_outputs):
             if self.save_images:
                 save_image(y, os.path.join(self.save_images, f'image_{i}_{defect_type}.png'))
-            
+
+        for i, (mask, fake_image, y, original_image, defect_type, loss) in enumerate(self.test_outputs[:10]):
             fig, axes = plt.subplots(1, 4, figsize=(15, 6))
 
             # Display the mask
@@ -157,23 +164,13 @@ class HarmonizationModule(LightningModule):
         
         elif self.scheduler == 'plateau':
             print("Using ReduceLROnPlateau scheduler")
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', min_lr=1e-8, factor=0.1, patience=5, verbose=True)
-            return  {
-                        'optimizer': optimizers,
-                        'scheduler': scheduler,
-                        'monitor': 'val_loss'
-                    }
-        
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', min_lr=1e-8, factor=0.1, patience=5)
+            return {
+                'optimizer': optimizers,
+                'lr_scheduler': scheduler,
+                'monitor': 'val_loss',
+            }
+
         if scheduler is not None:
             return [optimizers], scheduler
         return [optimizers]
-        
-    def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
-        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            previous_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
-            scheduler.step(metric)
-            new_lr = self.trainer.optimizers[optimizer_idx].param_groups[0]['lr']
-            if new_lr != previous_lr:
-                self.log('lr', new_lr, prog_bar=True, logger=True)
-        else:
-            super().lr_scheduler_step(scheduler, optimizer_idx, metric)

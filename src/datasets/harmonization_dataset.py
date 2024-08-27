@@ -17,12 +17,15 @@ class HarmonizationDatasetSplit(Dataset):
         return len(self.data)
     
     def __getitem__(self, idx):
-        transform = transforms.ToTensor()
+        transform = transforms.Compose([
+            transforms.Resize((512, 512)),
+            transforms.ToTensor()
+        ])
 
         sample = self.data.iloc[idx, :]
-        original_image = transform(Image.open(sample.original_image).convert('L').resize((512, 512)))
-        fake_image = transform(Image.open(sample.fake_image).convert('L').resize((512, 512)))
-        mask_image = transform(Image.open(sample.mask_image).convert('L').resize((512, 512)))
+        original_image = transform(Image.open(sample.original_image).convert('L'))
+        fake_image = transform(Image.open(sample.fake_image).convert('L'))
+        mask_image = transform(Image.open(sample.mask_image).convert('L'))
         input_tensor = torch.cat((fake_image, mask_image), 0)
         defect_type = sample.fake_image.split('_')[1]
         return (original_image, input_tensor, defect_type, mask_image)
@@ -107,7 +110,6 @@ class HarmonizationDataset(Dataset):
                 start_idx += size
     
         return tuple(splits)    
-
 
 class HarmonizationDatasetSynthetic(HarmonizationDataset):
     def __init__(self, defects_folder: Path, defects_masks_folder: Path):
