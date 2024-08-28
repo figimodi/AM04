@@ -7,7 +7,7 @@ from torchvision.models.googlenet import GoogLeNet
 class GoogLeNet(GoogLeNet):
     def __init__(self):
         # Initialize the inherited GoogLeNet class
-        super(ModifiedGoogLeNet, self).__init__(aux_logits=True, transform_input=True)
+        super(GoogLeNet, self).__init__(aux_logits=False)
         
         # Modify the first convolutional layer to accept a single channel input (grayscale)
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)

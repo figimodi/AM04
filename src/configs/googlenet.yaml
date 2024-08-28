@@ -4,7 +4,7 @@ dataset:
 model:
   name: googlenet
   epochs: 200
-  batch_size: 4
+  batch_size: 16
   learning_rate: 1e-5
   optimizer: adam
   scheduler: plateau

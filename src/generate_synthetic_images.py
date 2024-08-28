@@ -150,7 +150,7 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate synthetic images')
-    parser.add_argument('--tot_samples', type=int, help='Amount of synthetic images generated', required=True, dest='N_SAMPLES', default=100)    
+    parser.add_argument('--tot_samples', type=int, help='Amount of synthetic images generated', dest='N_SAMPLES', default=500)    
     args = parser.parse_args()
 
     os.makedirs(PATH_TO_SYNTHETIC, exist_ok=True)

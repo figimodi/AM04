@@ -3,6 +3,7 @@ from models.resnet import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 from models.lenet5 import LeNet5
 from models.vgg import GrayVGG16_BN, GrayVGG16
 from models.googlenet import GoogLeNet
+from models.alexnet import AlexNet
 
 __all__ = [
     'TSAINetworkV1',

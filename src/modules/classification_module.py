@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
-from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5, GrayVGG16_BN, GrayVGG16, GoogLeNet
+from models import ResNet18, ResNet34, ResNet50, ResNet101, ResNet152, LeNet5, GrayVGG16_BN, GrayVGG16, GoogLeNet, AlexNet
 from datasets import Defect
 
 resnet_architectures = {
@@ -38,8 +38,10 @@ class ClassificationModule(LightningModule):
             self.model = resnet_architectures[name]()
         elif 'vgg' in name:
             self.model = vgg_architectures[name]()
-        elif namme == 'googlenet':
+        elif name == 'googlenet':
             self.model = GoogLeNet()
+        elif name == 'alexnet':
+            self.model = AlexNet()
         elif name == 'lenet5':
             self.model = LeNet5()
         else:
@@ -164,7 +166,7 @@ class ClassificationModule(LightningModule):
         
         elif self.scheduler == 'plateau':
             print("Using ReduceLROnPlateau scheduler")
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=5, min_lr=1e-8, verbose=True)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=5, min_lr=1e-8)
             return  {
                         'optimizer': optimizers,
                         'lr_scheduler': scheduler,
