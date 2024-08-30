@@ -18,7 +18,7 @@ def generate_random_points(min_dist, max_points):
     points = [] 
      
     while len(points) < max_points : 
-        candidate_point = int(np.random.normal(center[0], random.randint(20,70))), int(np.random.normal(center[1], random.randint(20,70)))
+        candidate_point = int(np.random.normal(center[0], random.randint(20,50))), int(np.random.normal(center[1], random.randint(20,50)))
          
         if len(points) == 0: 
             points.append(candidate_point) 
