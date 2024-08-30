@@ -52,6 +52,10 @@ class ObjectDetectionDatasetSplit(Dataset):
             x_max = x_max*512//1280
             y_max = y_max*512//1024 
             targets['boxes'][i] = [x_min, y_min, x_max, y_max]
+            targets['labels'][i] = Defect[targets['labels'][i].upper()].value
+        
+        targets['boxes'] = torch.Tensor(targets['boxes'])
+        targets['labels'] = torch.Tensor(targets['labels'])
 
         return (image, targets)
 

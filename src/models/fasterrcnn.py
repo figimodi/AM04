@@ -47,6 +47,9 @@ class MyFasterRCNN(nn.Module):
             box_roi_pool=roi_pooler
         )
 
-    def forward(self, x):   
-        return self.model(x)
+    def forward(self, x):
+        if len(x) == 2:   
+            return self.model(x[0], x[1])
+        else:
+            return self.model(x)
         
