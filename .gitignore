@@ -23,5 +23,3 @@ Image5[0-9]*/
 # Debug files
 debug/
 *debug.yaml
-
-data\data_faster_rcnn.pkl

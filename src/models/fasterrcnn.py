@@ -6,9 +6,9 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.models import resnet50
 from torchvision.models.detection.backbone_utils import BackboneWithFPN
 
-class CustomFasterRCNN(nn.Module):
+class MyFasterRCNN(nn.Module):
     def __init__(self, num_classes=5):
-        super(CustomFasterRCNN, self).__init__()
+        super(MyFasterRCNN, self).__init__()
 
         # Load a pre-trained ResNet50 backbone
         backbone = resnet50(pretrained=True)
@@ -28,8 +28,8 @@ class CustomFasterRCNN(nn.Module):
 
         # Define the Region Proposal Network (RPN) anchor generator
         rpn_anchor_generator = AnchorGenerator(
-            sizes=((32, 64, 128, 256, 512),),
-            aspect_ratios=((0.5, 1.0, 2.0),) * 5
+            sizes=((16, 64, 128, 256, 512),),  # Added a larger size
+            aspect_ratios=((0.1, 0.5, 1.0, 2.0, 4.0),) * 5  # Added a larger aspect ratio for extremely tall objects
         )
 
         # Define the ROI Pooling feature extractor
@@ -47,5 +47,6 @@ class CustomFasterRCNN(nn.Module):
             box_roi_pool=roi_pooler
         )
 
-    def forward(self, x):
+    def forward(self, x):   
         return self.model(x)
+        

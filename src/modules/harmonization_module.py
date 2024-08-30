@@ -56,7 +56,7 @@ class HarmonizationModule(LightningModule):
         return torch.nn.functional.mse_loss(y, original_image)
 
     def training_step(self, batch):
-        original_image, fake_image, defect_type, mask = batch
+        original_image, fake_image, defect_type, mask, filename = batch
         batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
@@ -69,7 +69,7 @@ class HarmonizationModule(LightningModule):
         self.log('lr', lr, prog_bar=True, on_epoch=True)
 
     def validation_step(self, batch):
-        original_image, fake_image, defect_type, mask = batch
+        original_image, fake_image, defect_type, mask, filename = batch
         batch_size = original_image.shape[0]
         y = self.net(fake_image)
         loss = self.loss_function(y, original_image)
@@ -77,7 +77,7 @@ class HarmonizationModule(LightningModule):
         return {"loss": loss}
     
     def test_step(self, batch):
-        original_image, fake_image, defect_type, mask = batch
+        original_image, fake_image, defect_type, mask, filename = batch
         y = self.net(fake_image)
 
         for i in range(original_image.shape[0]):
@@ -87,7 +87,8 @@ class HarmonizationModule(LightningModule):
                 y[i],              
                 original_image[i],
                 defect_type[i],  
-                self.loss_function(y[i], original_image[i])    
+                self.loss_function(y[i], original_image[i]),
+                filename[i],    
             ))        
 
         return None
@@ -98,11 +99,11 @@ class HarmonizationModule(LightningModule):
         else:
             self.test_outputs.sort(key=lambda x: x[-1])
 
-        for i, (mask, fake_image, y, original_image, defect_type, loss) in enumerate(self.test_outputs):
+        for i, (mask, fake_image, y, original_image, defect_type, loss, filename) in enumerate(self.test_outputs):
             if self.save_images:
-                save_image(y, os.path.join(self.save_images, f'image_{i}_{defect_type}.png'))
+                save_image(y, os.path.join(self.save_images, str(filename)))
 
-        for i, (mask, fake_image, y, original_image, defect_type, loss) in enumerate(self.test_outputs[:10]):
+        for i, (mask, fake_image, y, original_image, defect_type, loss, _) in enumerate(self.test_outputs[:10]):
             fig, axes = plt.subplots(1, 4, figsize=(15, 6))
 
             # Display the mask
@@ -136,7 +137,7 @@ class HarmonizationModule(LightningModule):
 
             plt.close(fig)
 
-        loss = torch.tensor([sample[-1] for sample in self.test_outputs]).mean()
+        loss = torch.tensor([sample[-2] for sample in self.test_outputs]).mean()
         self.log('test_loss:', loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
