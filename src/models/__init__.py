@@ -4,6 +4,8 @@ from models.lenet5 import LeNet5
 from models.vgg import GrayVGG16_BN, GrayVGG16
 from models.googlenet import GoogLeNet
 from models.alexnet import AlexNet
+from models.fasterrcnn import MyFasterRCNN
+
 
 __all__ = [
     'TSAINetworkV1',
@@ -17,4 +19,5 @@ __all__ = [
     'GrayVGG16',
     'GrayVGG16_BN',
     'GoogLeNet',
+    'MyFasterRCNN',
 ]

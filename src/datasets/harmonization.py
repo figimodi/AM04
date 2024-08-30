@@ -28,7 +28,7 @@ class HarmonizationDatasetSplit(Dataset):
         mask_image = transform(Image.open(sample.mask_image).convert('L'))
         input_tensor = torch.cat((fake_image, mask_image), 0)
         defect_type = sample.fake_image.split('_')[1]
-        return (original_image, input_tensor, defect_type, mask_image)
+        return (original_image, input_tensor, defect_type, mask_image, os.path.basename(sample.fake_image))
 
     def __iter__(self):
         for sample in self.data:

@@ -19,6 +19,7 @@ class ModelConfig(BaseModel):
     only_test: bool
     save_images: Optional[Path] = None
     pretrained: Optional[Path] = None
+    annotations: Optional[Path] = None
 
 class LoggerConfig(BaseModel):
     log_dir: Path

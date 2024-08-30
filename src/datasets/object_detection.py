@@ -1,5 +1,6 @@
 import os
 import torch
+import pickle
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset
@@ -17,10 +18,13 @@ class Defect(Enum):
     SPATTERING = 3
     HORIZONTAL = 4
 
-class ClassifierDatasetSplit(Dataset):
-    def __init__(self, data: pd.DataFrame):
+class ObjectDetectionDatasetSplit(Dataset):
+    def __init__(self, data: pd.DataFrame, annotations: Path):
         self.data = data
         self.mean, self.std = self.__calculate_mean_std__()
+        
+        with open(annotations, 'rb') as f:
+            self.annotaions = pickle.load(f)
 
     def __len__(self):
         return len(self.data)
@@ -39,8 +43,21 @@ class ClassifierDatasetSplit(Dataset):
         sample = self.data.iloc[idx, :]
         image = Image.open(sample.image_path).convert('L')
         image = transform(image)
-        label = sample.label
-        return (image, label)
+        targets = self.annotaions[os.path.basename(sample.image_path)]
+        
+        for i, coords in enumerate(targets['boxes']):
+            x_min, y_min, x_max, y_max = coords
+            x_min = x_min*512//1280
+            y_min = y_min*512//1024 
+            x_max = x_max*512//1280
+            y_max = y_max*512//1024 
+            targets['boxes'][i] = [x_min, y_min, x_max, y_max]
+            targets['labels'][i] = Defect[targets['labels'][i].upper()].value
+        
+        targets['boxes'] = torch.Tensor(targets['boxes'])
+        targets['labels'] = torch.Tensor(targets['labels'])
+
+        return (image, targets)
 
     def __calculate_mean_std__(self):
         transform = transforms.Compose([
@@ -67,7 +84,7 @@ class ClassifierDatasetSplit(Dataset):
         for sample in self.data:
             yield sample
 
-class ClassifierDataset(Dataset):
+class ObjectDetectionDataset(Dataset):
     def __init__(self, synthetized_defects_folder):
         super().__init__()
         self.data = self.__load__(synthetized_defects_folder)
@@ -88,13 +105,13 @@ class ClassifierDataset(Dataset):
             data.append(
                 {
                     'image_path': image_path,
-                    'label': Defect[os.path.splitext(image_path)[0].split('_')[-1].upper()].value,
+                    'label': Defect[os.path.splitext(image_path)[0].split('_')[-2].upper()].value,
                 }
             )
 
         return pd.DataFrame(data)
 
-    def create_splits(self, splits_proportion: List[float]) -> Tuple[ClassifierDatasetSplit]:
+    def create_splits(self, splits_proportion: List[float], annotations:Path) -> Tuple[ObjectDetectionDatasetSplit]:
         assert sum(splits_proportion) == 1, 'The proportions of the splits must be sum up to 1'
 
         # Calculate the number of rows for each split based on proportions
@@ -107,7 +124,8 @@ class ClassifierDataset(Dataset):
         splits = list()
         start_idx = 0
         for size in split_sizes:
-            splits.append(ClassifierDatasetSplit(df.iloc[start_idx:start_idx + size]))
+            splits.append(ObjectDetectionDatasetSplit(df.iloc[start_idx:start_idx + size], annotations))
             start_idx += size
     
         return tuple(splits)    
+
