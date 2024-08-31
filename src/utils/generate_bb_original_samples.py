@@ -23,7 +23,7 @@ def generate_pickle_faster_rcnn():
                     label = parts[2].split('.')[0]
                     
                     mask_path = os.path.join(DEFECTS_MASKS_DIR, mask_folder, mask_file)
-                    mask = np.array(Image.open(mask_path))
+                    mask = np.array(Image.open(mask_path).convert('L'))
                     true_points = np.argwhere(mask==255)
                     
                     try:  

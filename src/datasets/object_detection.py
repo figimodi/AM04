@@ -35,7 +35,6 @@ class ObjectDetectionDatasetSplit(Dataset):
             transforms.Resize((512, 512)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
-            # transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.mean, std=self.std)
         ])
@@ -47,15 +46,17 @@ class ObjectDetectionDatasetSplit(Dataset):
         
         for i, coords in enumerate(targets['boxes']):
             x_min, y_min, x_max, y_max = coords
-            x_min = x_min*512//1280
-            y_min = y_min*512//1024 
-            x_max = x_max*512//1280
-            y_max = y_max*512//1024 
+            
+            x_min = int(x_min*512/1280)
+            y_min = int(y_min*512/1024)
+            x_max = int(x_max*512/1280)
+            y_max = int(y_max*512/1024)
+            
             targets['boxes'][i] = [x_min, y_min, x_max, y_max]
-            targets['labels'][i] = Defect[targets['labels'][i].upper()].value
+            targets['labels'][i] = int(Defect[targets['labels'][i].upper()].value)
         
-        targets['boxes'] = torch.Tensor(targets['boxes'])
-        targets['labels'] = torch.Tensor(targets['labels'])
+        targets['boxes'] = torch.Tensor(targets['boxes']).to(dtype=torch.float)
+        targets['labels'] = torch.Tensor(targets['labels']).to(dtype=torch.int64)
 
         return (image, targets)
 
@@ -74,6 +75,8 @@ class ObjectDetectionDatasetSplit(Dataset):
             image = transform(image)
             means.append(image.mean(dim=[1, 2]))
             stds.append(image.std(dim=[1, 2]))
+            
+        
         
         mean = torch.stack(means).mean(dim=0).numpy()
         std = torch.stack(stds).mean(dim=0).numpy()
