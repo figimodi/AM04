@@ -1,11 +1,16 @@
 import torch
+import torchvision 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
 from typing import Tuple
 from pydantic import BaseModel
 from models import MyFasterRCNN
 from datasets import Defect
+from torchvision.ops import box_iou
+from sklearn.metrics import auc
+
 
 class ObjectDetectionModule(LightningModule):
     def __init__(
@@ -36,24 +41,22 @@ class ObjectDetectionModule(LightningModule):
 
     def training_step(self, batch, batch_idx):
         images, targets = batch
-        predictions = self((images, targets))
+        loss_dict = self.model(images, targets)
+        total_loss = sum(loss for loss in loss_dict.values())
         
-        # FasterRCNN returns a list of dicts, one per image
-        loss_dict = self.model.roi_heads.losses(predictions, targets)  # Extract losses from the model
-        total_loss = sum(loss for loss in loss_dict.values())  # Sum up all losses
-        
-        self.log('train_loss', total_loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log('train_loss', total_loss.item(), logger=True, prog_bar=True, on_step=True, on_epoch=True)
         return {"loss": total_loss}
     
     def on_train_epoch_end(self):
         optimizer = self.optimizers()
+        if len(optimizer.param_groups) == 0:
+            return
         lr = optimizer.param_groups[0]['lr']
         self.log('lr', lr, prog_bar=True, on_epoch=True)
 
     def validation_step(self, batch, batch_idx):
         images, targets = batch
-        predictions = self(images)
-        loss_dict = self.model.roi_heads.losses(predictions, targets)
+        loss_dict , _ = self.model.eval_forward(images, targets)
         total_loss = sum(loss for loss in loss_dict.values())
         
         self.log('val_loss', total_loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
@@ -61,41 +64,111 @@ class ObjectDetectionModule(LightningModule):
 
     def test_step(self, batch, batch_idx):
         images, targets = batch
-        predictions = self(images)
+        predictions = self.model(images)
 
         for i in range(len(images)):
             self.test_outputs.append((
                 images[i],
                 predictions[i],
-                targets[i],
-                sum(self.model.roi_heads.losses(predictions, targets).values())  # Total loss
+                targets[i]
             ))
 
         return None
 
     def on_test_epoch_end(self):
-        for i, (image, prediction, target, loss) in enumerate(self.test_outputs):
-            # Extract bounding boxes and labels
-            boxes = prediction['boxes'].cpu().detach().numpy()
-            labels = prediction['labels'].cpu().detach().numpy()
-            scores = prediction['scores'].cpu().detach().numpy()
+        threshold = 0.3
+        num_classes = 5
+        ap_per_class = dict()
+        occurances_per_class = {k: 0 for k in range(num_classes)}
+        predictions_per_class = {k: pd.DataFrame(columns=['iou', 'correct', 'precision', 'recall']) for k in range(num_classes)}
+
+        # Check predictions
+        for _, prediction, target in self.test_outputs:
+            pred_boxes = prediction['boxes'].cpu().detach().numpy()
+            pred_labels = prediction['labels'].cpu().detach().numpy()
+            pred_scores = prediction['scores'].cpu().detach().numpy()
+
+            target_boxes = target['boxes'].cpu().detach().numpy()
+            target_labels = target['labels'].cpu().detach().numpy()
+
+            # For each prediction check it's correct
+            ious = box_iou(torch.Tensor(pred_boxes), torch.Tensor(target_boxes))
+            target_idx = np.argmax(ious, axis=1)
+            corrects = pred_labels == target_labels[target_idx]
+            
+            iou_values = ious[np.arange(ious.shape[0]), target_idx]
+            ious = iou_values.numpy().reshape(-1, 1) 
+
+            # NMS to eliminate overlapping predictions
+            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(ious), threshold)
+
+            for p in keep:
+                c = pred_labels[p]
+                new_row = {'iou': ious[p][target_idx[p]], 'correct': corrects[p], 'precision': 0, 'recall': 0}
+                predictions_per_class[c] = predictions_per_class[c].append(new_row, ignore_index=True)
+
+            unique_labels, counts = np.unique(target_labels, return_counts=True)
+            label_counts = dict(zip(unique_labels, counts))
+            for label, count in label_counts.items():
+                occurances_per_class[label] += count
+
+
+        for c in range(num_classes):
+            predictions_per_class[c] = predictions_per_class[c].sort_values(by='iou', ascending=False)
+            TP = 0
+            FP = 0
+
+            for i, row in predictions_per_class[c]:
+                TP += row['correct']
+                FP += not row['correct']
+                row['recall'] = TP / occurances_per_class[c]
+                row['precision'] = TP / (TP + FP)
+
+            precision = predictions_per_class[c]['precision'].values
+            recall = predictions_per_class[c]['recall'].values
+            pr_auc = auc(recall, precision)
+
+            # Average Precision
+            ap_per_class[c] = pr_auc
+
+        mAP = np.array(list(ap_per_class.values())).mean()
+        self.log('mAP', mAP, logger=True, prog_bar=True, on_step=False, on_epoch=True)
+
+        # Visualize predictions
+        for i, (image, prediction, target) in enumerate(self.test_outputs):
+            pred_boxes = prediction['boxes'].cpu().detach().numpy()
+            pred_labels = prediction['labels'].cpu().detach().numpy()
+            pred_scores = prediction['scores'].cpu().detach().numpy()
+
+            target_boxes = target['boxes'].cpu().detach().numpy()
+            target_labels = target['labels'].cpu().detach().numpy()
+
+            # NMS to eliminate overlapping predictions
+            keep = torchvision.ops.nms(pred_boxes, pred_scores, threshold)
+            pred_boxes = pred_boxes[keep]
+            pred_labels = pred_labels[keep]
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
 
-            for box, label, score in zip(boxes, labels, scores):
-                if score > 0.5:  # Threshold for displaying boxes
-                    x_min, y_min, x_max, y_max = box
-                    rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='red', linewidth=2)
-                    ax.add_patch(rect)
-                    ax.text(x_min, y_min, f'{Defect(label).name} ({score:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='black')
+            for box, label, score in zip(pred_boxes, pred_labels, pred_scores):
+                x_min, y_min, x_max, y_max = box
+                rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='blue', linewidth=1)
+                ax.add_patch(rect)
+                ax.text(x_min, y_min, f'{Defect(label).name} ({score:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='blue')
+
+            for box, label in zip(target_boxes, target_labels):
+                x_min, y_min, x_max, y_max = box
+                rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='red', linewidth=1)
+                ax.add_patch(rect)
+                ax.text(x_min, y_min, f'{Defect(label).name} ({score:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='red')
 
             plt.suptitle(f'Result {i+1}')
             fig.canvas.draw()
 
             # Copy the buffer to make it writable
             plot_image = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-            plot_image = plot_image.copy()  # Make the buffer writable
+            plot_image = plot_image.copy()
             plot_image = torch.from_numpy(plot_image)
             plot_image = plot_image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
 
@@ -104,13 +177,9 @@ class ObjectDetectionModule(LightningModule):
 
             plt.close(fig)
 
-        # Calculate the mean test loss
-        loss = torch.tensor([sample[-1] for sample in self.test_outputs]).mean()
-        self.log('test_loss', loss, logger=True, prog_bar=True, on_step=False, on_epoch=True)
-
     def configure_optimizers(self):
-        optimizer = None
         scheduler = None
+        optimizer = None
         
         if self.optimizer == 'adam':
             print("Using Adam optimizer")
@@ -143,4 +212,3 @@ class ObjectDetectionModule(LightningModule):
         
         if scheduler is not None:
             return [optimizer], [scheduler]
-        return [optimizer]

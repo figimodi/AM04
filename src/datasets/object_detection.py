@@ -1,6 +1,7 @@
 import os
 import torch
 import pickle
+import random
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset
@@ -24,7 +25,7 @@ class ObjectDetectionDatasetSplit(Dataset):
         self.mean, self.std = self.__calculate_mean_std__()
         
         with open(annotations, 'rb') as f:
-            self.annotaions = pickle.load(f)
+            self.annotations = pickle.load(f)
 
     def __len__(self):
         return len(self.data)
@@ -42,15 +43,15 @@ class ObjectDetectionDatasetSplit(Dataset):
         sample = self.data.iloc[idx, :]
         image = Image.open(sample.image_path).convert('L')
         image = transform(image)
-        targets = self.annotaions[os.path.basename(sample.image_path)]
+        targets = self.annotations[os.path.basename(sample.image_path)]
         
         for i, coords in enumerate(targets['boxes']):
             x_min, y_min, x_max, y_max = coords
             
-            x_min = int(x_min*512/1280)
-            y_min = int(y_min*512/1024)
-            x_max = int(x_max*512/1280)
-            y_max = int(y_max*512/1024)
+            x_min = x_min*512/1280
+            y_min = y_min*512/1024
+            x_max = x_max*512/1280
+            y_max = y_max*512/1024
             
             targets['boxes'][i] = [x_min, y_min, x_max, y_max]
             targets['labels'][i] = int(Defect[targets['labels'][i].upper()].value)
@@ -103,6 +104,9 @@ class ObjectDetectionDataset(Dataset):
         synthetized_defect_images =[os.path.join(synthetized_defects_folder, image) 
                                     for image in os.listdir(synthetized_defects_folder) 
                                     if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
+
+        # Make the training less heavy
+        synthetized_defect_images = random.sample(synthetized_defect_images, len(synthetized_defect_images) // 5)
 
         for image_path in synthetized_defect_images:
             data.append(
