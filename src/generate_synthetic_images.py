@@ -6,6 +6,8 @@ import numpy as np
 import argparse
 import pickle
 
+import torch
+
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_TO_MASKS = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
 PATH_TO_DEFECTS = os.path.join(ROOT_DIR, 'data', 'Defects')
@@ -157,8 +159,9 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
                     else:
                         count_tries += 1
                 
-                data_faster_rcnn_item["boxes"].append([x_start, y_start, x_end, y_end])
-                data_faster_rcnn_item["labels"].append(int(Defect[chosen_defect_type.upper()].value))
+                data_faster_rcnn_item["boxes"].append(torch.Tensor([x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024]))
+
+                data_faster_rcnn_item["labels"].append(torch.Tensor(int(Defect[chosen_defect_type.upper()].value)))
                 
                 nodefect_image.paste(defect_image, (x_start - original_topleft_pos[1], y_start - original_topleft_pos[0]), defect_mask)
             

@@ -3,7 +3,7 @@ dataset:
   splits: [.5, .25, .25]
 model:
   name: fasterrcnn
-  epochs: 50
+  epochs: 20
   batch_size: 4
   learning_rate: 1e-5
   optimizer: adam
