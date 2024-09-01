@@ -159,11 +159,14 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
                     else:
                         count_tries += 1
                 
-                data_faster_rcnn_item["boxes"].append(torch.Tensor([x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024]))
+                data_faster_rcnn_item["boxes"].append([x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024])
 
-                data_faster_rcnn_item["labels"].append(torch.Tensor(int(Defect[chosen_defect_type.upper()].value)))
+                data_faster_rcnn_item["labels"].append(Defect[chosen_defect_type.upper()].value)
                 
                 nodefect_image.paste(defect_image, (x_start - original_topleft_pos[1], y_start - original_topleft_pos[0]), defect_mask)
+            
+            data_faster_rcnn_item["boxes"] = torch.tensor(data_faster_rcnn_item["boxes"]).to(torch.float32)
+            data_faster_rcnn_item["labels"] = torch.tensor(data_faster_rcnn_item["labels"]).to(torch.int64)
             
             data_faster_rcnn[synthetic_image_name] = data_faster_rcnn_item    
             
