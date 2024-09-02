@@ -44,20 +44,6 @@ class ObjectDetectionDatasetSplit(Dataset):
         image = Image.open(sample.image_path).convert('L')
         image = transform(image)
         targets = self.annotations[os.path.basename(sample.image_path)]
-        
-        for i, coords in enumerate(targets['boxes']):
-            x_min, y_min, x_max, y_max = coords
-            
-            x_min = x_min*512/1280
-            y_min = y_min*512/1024
-            x_max = x_max*512/1280
-            y_max = y_max*512/1024
-            
-            targets['boxes'][i] = [x_min, y_min, x_max, y_max]
-            targets['labels'][i] = int(Defect[targets['labels'][i].upper()].value)
-        
-        targets['boxes'] = torch.Tensor(targets['boxes']).to(dtype=torch.float)
-        targets['labels'] = torch.Tensor(targets['labels']).to(dtype=torch.int64)
 
         return (image, targets)
 

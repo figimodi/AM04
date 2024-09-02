@@ -97,14 +97,14 @@ class ObjectDetectionModule(LightningModule):
             corrects = pred_labels == target_labels[target_idx]
             
             iou_values = ious[np.arange(ious.shape[0]), target_idx]
-            ious = iou_values.numpy().reshape(-1, 1) 
+            ious = iou_values.numpy().reshape(-1, 1).flatten()
 
             # NMS to eliminate overlapping predictions
             keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(ious), threshold)
 
             for p in keep:
                 c = pred_labels[p]
-                new_row = {'iou': ious[p][target_idx[p]], 'correct': corrects[p], 'precision': 0, 'recall': 0}
+                new_row = {'iou': ious[p], 'correct': corrects[p], 'precision': 0, 'recall': 0}
                 predictions_per_class[c] = predictions_per_class[c].append(new_row, ignore_index=True)
 
             unique_labels, counts = np.unique(target_labels, return_counts=True)
