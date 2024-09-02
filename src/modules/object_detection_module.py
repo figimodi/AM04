@@ -169,13 +169,13 @@ class ObjectDetectionModule(LightningModule):
                 x_min, y_min, x_max, y_max = box
                 rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='blue', linewidth=1)
                 ax.add_patch(rect)
-                ax.text(x_min, y_min, f'{Defect(label).name} (iou={iou:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='blue')
+                ax.text(x_min, y_min, f'{Defect(label).name} (iou={iou:.2f})', bbox=dict(facecolor='yellow', alpha=0.3), fontsize=6, color='blue')
 
             for box, label in zip(target_boxes, target_labels):
                 x_min, y_min, x_max, y_max = box
                 rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='red', linewidth=1)
                 ax.add_patch(rect)
-                ax.text(x_min, y_min, f'{Defect(label).name}', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='red')
+                ax.text(x_min, y_min, f'{Defect(label).name}', bbox=dict(facecolor='yellow', alpha=0.3), fontsize=6, color='red')
 
             plt.suptitle(f'Result {i+1}')
             fig.canvas.draw()

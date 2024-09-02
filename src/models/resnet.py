@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torchvision.models as models
 from torchvision.models.resnet import ResNet, BasicBlock, Bottleneck
 
 
@@ -11,7 +10,7 @@ class ResNet18(ResNet):
         
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
-        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        # Replace the final fully connected layer with one that has `num_classes=6` outputs
         self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet34(ResNet):
@@ -21,7 +20,7 @@ class ResNet34(ResNet):
         
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
-        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        # Replace the final fully connected layer with one that has `num_classes=6` outputs
         self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet50(ResNet):
@@ -31,7 +30,7 @@ class ResNet50(ResNet):
 
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         
-        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        # Replace the final fully connected layer with one that has `num_classes=6` outputs
         self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet101(ResNet):
@@ -41,7 +40,7 @@ class ResNet101(ResNet):
 
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         
-        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        # Replace the final fully connected layer with one that has `num_classes=6` outputs
         self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet152(ResNet):
@@ -51,5 +50,5 @@ class ResNet152(ResNet):
 
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
-        # Replace the final fully connected layer with one that has `num_classes=5` outputs
+        # Replace the final fully connected layer with one that has `num_classes=6` outputs
         self.fc = nn.Linear(self.fc.in_features, 6)

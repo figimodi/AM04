@@ -3,7 +3,6 @@ import torch.nn as nn
 import torchvision
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
-from torchvision.models import resnet50
 from torchvision.models.detection.backbone_utils import BackboneWithFPN
 from torchvision.models.detection.transform import GeneralizedRCNNTransform
 from typing import Tuple, List, Dict, Optional
@@ -17,14 +16,16 @@ class MyFasterRCNN(nn.Module):
     def __init__(self, num_classes=5):
         super(MyFasterRCNN, self).__init__()
 
-        backbone = resnet50()
-        backbone.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        resnet_net = torchvision.models.resnet18(pretrained=False)
+        resnet_net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        modules = list(resnet_net.children())[:-2]
+        backbone = nn.Sequential(*modules)
         
         backbone_with_fpn = BackboneWithFPN(
             backbone, 
             return_layers={'layer1': '0', 'layer2': '1', 'layer3': '2', 'layer4': '3'},
-            in_channels_list=[256, 512, 1024, 2048],
-            out_channels=256
+            in_channels_list=[64, 128, 256, 512],
+            out_channels=512
         )
 
         # Define the Region Proposal Network (RPN) anchor generator
@@ -46,11 +47,24 @@ class MyFasterRCNN(nn.Module):
             num_classes=num_classes,
             rpn_anchor_generator=rpn_anchor_generator,
             box_roi_pool=roi_pooler,
+            box_detections_per_img=50,
         )
         
         mean = [0]
         std = [1]
         transforms = GeneralizedRCNNTransform(800,1333,mean,std)
+        # transforms = GeneralizedRCNNTransform(
+        #     min_size=None,
+        #     max_size=None,
+        #     random_horizontal_flip=False,
+        #     random_vertical_flip=False,
+        #     random_rotation=0,
+        #     random_brightness=0,
+        #     random_contrast=0,
+        #     random_hue=0,
+        #     random_saturation=0,
+        #     normalize=(0, 1),
+        # )
         self.model.transform = transforms
 
     def forward(self, images, targets=None):
