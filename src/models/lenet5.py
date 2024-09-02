@@ -3,7 +3,6 @@ import torch.nn.functional as F
 import numpy as np
 import torch.nn.utils as torch_utils
 
-
 class LeNet5(nn.Module):
 
     # network structure
@@ -13,7 +12,7 @@ class LeNet5(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=in_channels, kernel_size=3)
         self.fc1 = nn.Linear(63*63*in_channels)
         self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 5)
+        self.fc3 = nn.Linear(84, 6)
 
     def forward(self, x):
         x = x.squeeze(2)

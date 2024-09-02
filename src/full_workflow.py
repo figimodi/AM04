@@ -100,6 +100,7 @@ if __name__ == '__main__':
             # Generate synthetic images and pass them through pretrained TSAI network
             harmoninaztion_synthetic = [
                 ['generate_synthetic_images.py', '--tot_samples', str(config.synthetic.n_samples)],
+                ['generate_defect_free_images.py', '--n_samples', str(config.synthetic.n_samples//5)],
                 ['harmonize_synthetic_images.py',
                     '--config', str(config.synthetic.config),
                     '--only_test',

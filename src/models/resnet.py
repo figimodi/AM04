@@ -12,7 +12,7 @@ class ResNet18(ResNet):
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
-        self.fc = nn.Linear(self.fc.in_features, 5)
+        self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet34(ResNet):
     def __init__(self):
@@ -22,7 +22,7 @@ class ResNet34(ResNet):
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
-        self.fc = nn.Linear(self.fc.in_features, 5)
+        self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet50(ResNet):
     def __init__(self,):
@@ -32,7 +32,7 @@ class ResNet50(ResNet):
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
-        self.fc = nn.Linear(self.fc.in_features, 5)
+        self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet101(ResNet):
     def __init__(self):
@@ -42,7 +42,7 @@ class ResNet101(ResNet):
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
-        self.fc = nn.Linear(self.fc.in_features, 5)
+        self.fc = nn.Linear(self.fc.in_features, 6)
 
 class ResNet152(ResNet):
     def __init__(self):
@@ -52,4 +52,4 @@ class ResNet152(ResNet):
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         # Replace the final fully connected layer with one that has `num_classes=5` outputs
-        self.fc = nn.Linear(self.fc.in_features, 5)
+        self.fc = nn.Linear(self.fc.in_features, 6)

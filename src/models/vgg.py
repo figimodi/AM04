@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class GrayVGG16(nn.Module):
-    def __init__(self, in_dim = 1, num_classes = 1000):
+    def __init__(self, in_dim = 1, num_classes = 6):
         super(GrayVGG16, self).__init__()
         # feature extraction part
         self.conv1 = nn.Sequential(

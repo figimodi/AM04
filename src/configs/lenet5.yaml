@@ -1,5 +1,6 @@
 dataset:
   synthetized_defects_folder: ./../data/SyntheticDefectsHarmonized/
+  synthetized_no_defects_folder: ./../data/SyntheticNoDefects/
   splits: [.5, .25, .25]
 model:
   name: lenet5
