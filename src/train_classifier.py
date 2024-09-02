@@ -17,6 +17,7 @@ if __name__ == '__main__':
     # Load sources
     classifier_dataset = ClassifierDataset(
         synthetized_defects_folder=config.dataset.synthetized_defects_folder,
+        synthetized_no_defects_folder=config.dataset.synthetized_no_defects_folder
     )
 
     # Create train-val-test splits

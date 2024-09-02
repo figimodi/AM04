@@ -12,7 +12,7 @@ class AlexNet(nn.Module):
         self.alexnet.features[0] = nn.Conv2d(1, 64, kernel_size=11, stride=4, padding=2)
         
         # Modify the final fully connected layer to output `num_classes=5` classes
-        self.alexnet.classifier[6] = nn.Linear(self.alexnet.classifier[6].in_features, 5)
+        self.alexnet.classifier[6] = nn.Linear(self.alexnet.classifier[6].in_features, 6)
 
     def forward(self, x):
         return self.alexnet(x)

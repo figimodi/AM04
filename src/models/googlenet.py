@@ -13,4 +13,4 @@ class GoogLeNet(GoogLeNet):
         self.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
         
         # Replace the final fully connected layer with one that has num_classes=5 outputs
-        self.fc = nn.Linear(self.fc.in_features, 5)
+        self.fc = nn.Linear(self.fc.in_features, 6)

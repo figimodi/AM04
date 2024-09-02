@@ -7,6 +7,7 @@ class DatasetConfig(BaseModel):
     defects_folder: Optional[Path] = None
     defects_masks_folder: Optional[Path] = None
     synthetized_defects_folder: Optional[Path] = None
+    synthetized_no_defects_folder: Optional[Path] = None
     splits: List[float]
 
 class ModelConfig(BaseModel):
