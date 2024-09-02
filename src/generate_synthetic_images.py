@@ -1,9 +1,12 @@
+from enum import Enum
 import os
 import random
 from PIL import Image
 import numpy as np
 import argparse
 import pickle
+
+import torch
 
 ROOT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 PATH_TO_MASKS = os.path.join(ROOT_DIR, 'data', 'DefectsMasks')
@@ -46,12 +49,20 @@ def get_pos_topleft(image):
     top_left = true_points.min(axis=0)
     return top_left
 
+class Defect(Enum):
+    HOLE = 0
+    VERTICAL = 1
+    INCANDESCENCE = 2
+    SPATTERING = 3
+    HORIZONTAL = 4
+    
+    
 def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
     # probability of having few defects against having many defects (few and many defined next)
     masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename ]
     nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg') or f.endswith('.png')]
     defect_types = list(set([f.split('_')[3].split('.')[0] for f in masks_paths]))
-    
+    print(defect_types)
     data_faster_rcnn  = {}
 
     few = lambda: random.choice([1,2,3])
@@ -148,10 +159,14 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
                     else:
                         count_tries += 1
                 
-                data_faster_rcnn_item["boxes"].append([x_start, y_start, x_end, y_end])
-                data_faster_rcnn_item["labels"].append(chosen_defect_type)
+                data_faster_rcnn_item["boxes"].append([x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024])
+
+                data_faster_rcnn_item["labels"].append(Defect[chosen_defect_type.upper()].value)
                 
                 nodefect_image.paste(defect_image, (x_start - original_topleft_pos[1], y_start - original_topleft_pos[0]), defect_mask)
+            
+            data_faster_rcnn_item["boxes"] = torch.tensor(data_faster_rcnn_item["boxes"]).to(torch.float32)
+            data_faster_rcnn_item["labels"] = torch.tensor(data_faster_rcnn_item["labels"]).to(torch.int64)
             
             data_faster_rcnn[synthetic_image_name] = data_faster_rcnn_item    
             
