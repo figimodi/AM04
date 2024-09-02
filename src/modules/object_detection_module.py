@@ -44,7 +44,7 @@ class ObjectDetectionModule(LightningModule):
         loss_dict = self.model(images, targets)
         total_loss = sum(loss for loss in loss_dict.values())
         
-        self.log('train_loss', total_loss.item(), logger=True, prog_bar=True, on_step=True, on_epoch=True)
+        self.log('train_loss', total_loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": total_loss}
     
     def on_train_epoch_end(self):
@@ -76,9 +76,9 @@ class ObjectDetectionModule(LightningModule):
         return None
 
     def on_test_epoch_end(self):
-        threshold = 0.3
+        threshold = 0.02
         num_classes = 5
-        ap_per_class = dict()
+        ap_per_class = {k: 0 for k in range(num_classes)}
         occurances_per_class = {k: 0 for k in range(num_classes)}
         predictions_per_class = {k: pd.DataFrame(columns=['iou', 'correct', 'precision', 'recall']) for k in range(num_classes)}
 
@@ -91,7 +91,7 @@ class ObjectDetectionModule(LightningModule):
             target_boxes = target['boxes'].cpu().detach().numpy()
             target_labels = target['labels'].cpu().detach().numpy()
 
-            # For each prediction check it's correct
+            # For each prediction check if it's correct
             ious = box_iou(torch.Tensor(pred_boxes), torch.Tensor(target_boxes))
             target_idx = np.argmax(ious, axis=1)
             corrects = pred_labels == target_labels[target_idx]
@@ -104,8 +104,10 @@ class ObjectDetectionModule(LightningModule):
 
             for p in keep:
                 c = pred_labels[p]
-                new_row = {'iou': ious[p], 'correct': corrects[p], 'precision': 0, 'recall': 0}
-                predictions_per_class[c] = predictions_per_class[c].append(new_row, ignore_index=True)
+                if ious[p] > threshold:
+                    new_row = {'iou': ious[p], 'correct': corrects[p], 'precision': 0, 'recall': 0}
+                    predictions_per_class[c].loc[len(predictions_per_class[c])] = new_row
+                    predictions_per_class[c] = predictions_per_class[c].reset_index(drop=True)
 
             unique_labels, counts = np.unique(target_labels, return_counts=True)
             label_counts = dict(zip(unique_labels, counts))
@@ -114,11 +116,14 @@ class ObjectDetectionModule(LightningModule):
 
 
         for c in range(num_classes):
+            if len(predictions_per_class[c]) == 0:
+                ap_per_class[c] = 0
+                continue
             predictions_per_class[c] = predictions_per_class[c].sort_values(by='iou', ascending=False)
             TP = 0
             FP = 0
 
-            for i, row in predictions_per_class[c]:
+            for i, row in predictions_per_class[c].iterrows():
                 TP += row['correct']
                 FP += not row['correct']
                 row['recall'] = TP / occurances_per_class[c]
@@ -132,7 +137,7 @@ class ObjectDetectionModule(LightningModule):
             ap_per_class[c] = pr_auc
 
         mAP = np.array(list(ap_per_class.values())).mean()
-        self.log('mAP', mAP, logger=True, prog_bar=True, on_step=False, on_epoch=True)
+        self.log(f'mAP@{threshold}', mAP, logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
         # Visualize predictions
         for i, (image, prediction, target) in enumerate(self.test_outputs):
@@ -143,25 +148,34 @@ class ObjectDetectionModule(LightningModule):
             target_boxes = target['boxes'].cpu().detach().numpy()
             target_labels = target['labels'].cpu().detach().numpy()
 
+            # For each prediction check if it's correct
+            ious = box_iou(torch.Tensor(pred_boxes), torch.Tensor(target_boxes))
+            target_idx = np.argmax(ious, axis=1)
+            corrects = pred_labels == target_labels[target_idx]
+            
+            iou_values = ious[np.arange(ious.shape[0]), target_idx]
+            ious = iou_values.numpy().reshape(-1, 1).flatten()
+
             # NMS to eliminate overlapping predictions
-            keep = torchvision.ops.nms(pred_boxes, pred_scores, threshold)
+            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(ious), threshold)
+
             pred_boxes = pred_boxes[keep]
             pred_labels = pred_labels[keep]
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
 
-            for box, label, score in zip(pred_boxes, pred_labels, pred_scores):
+            for box, label, iou in zip(pred_boxes, pred_labels, ious):
                 x_min, y_min, x_max, y_max = box
                 rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='blue', linewidth=1)
                 ax.add_patch(rect)
-                ax.text(x_min, y_min, f'{Defect(label).name} ({score:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='blue')
+                ax.text(x_min, y_min, f'{Defect(label).name} (iou={iou:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='blue')
 
             for box, label in zip(target_boxes, target_labels):
                 x_min, y_min, x_max, y_max = box
                 rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='red', linewidth=1)
                 ax.add_patch(rect)
-                ax.text(x_min, y_min, f'{Defect(label).name} ({score:.2f})', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='red')
+                ax.text(x_min, y_min, f'{Defect(label).name}', bbox=dict(facecolor='yellow', alpha=0.5), fontsize=12, color='red')
 
             plt.suptitle(f'Result {i+1}')
             fig.canvas.draw()
@@ -179,36 +193,37 @@ class ObjectDetectionModule(LightningModule):
 
     def configure_optimizers(self):
         scheduler = None
-        optimizer = None
         
         if self.optimizer == 'adam':
             print("Using Adam optimizer")
-            optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+            optimizers = torch.optim.Adam(self.parameters(), lr=self.lr)
         
         elif self.optimizer == 'adamw':
             print("Using AdamW optimizer")
-            optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
+            optimizers = torch.optim.AdamW(self.parameters(), lr=self.lr)
         
         elif self.optimizer == 'sgd':
             print("Using SGD optimizer")
-            optimizer = torch.optim.SGD(self.parameters(), lr=self.lr)
+            optimizers = torch.optim.SGD(self.parameters(), lr=self.lr)
         
         if self.scheduler == 'cosine':
             print("Using CosineAnnealingLR scheduler")
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.epochs)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizers, T_max=self.epochs)
         
         elif self.scheduler == 'step':
             print("Using StepLR scheduler")
-            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizers, step_size=10, gamma=0.1)
         
         elif self.scheduler == 'plateau':
             print("Using ReduceLROnPlateau scheduler")
-            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=5, min_lr=1e-8)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizers, mode='min', factor=0.1, patience=5, min_lr=1e-8)
             return  {
-                        'optimizer': optimizer,
+                        'optimizer': optimizers,
                         'lr_scheduler': scheduler,
                         'monitor': 'val_loss'
                     }
         
         if scheduler is not None:
-            return [optimizer], [scheduler]
+            return [optimizers], [scheduler]
+        else:
+            return [optimizers]

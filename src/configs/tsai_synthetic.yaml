@@ -13,7 +13,7 @@ model:
   only_test: True
 logger:
   log_dir: ./log
-  experiment_name: harmonize_synthetic_images
+  experiment_name: tsai_on_synthetic
   version: 1
 checkpoint:
   monitor: val_loss

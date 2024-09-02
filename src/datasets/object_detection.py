@@ -1,10 +1,10 @@
-from copy import deepcopy
 import os
 import torch
 import pickle
 import random
 import pandas as pd
 import numpy as np
+from collections import defaultdict
 from torch.utils.data import Dataset
 from torchvision import transforms
 from pathlib import Path
@@ -64,8 +64,6 @@ class ObjectDetectionDatasetSplit(Dataset):
             means.append(image.mean(dim=[1, 2]))
             stds.append(image.std(dim=[1, 2]))
             
-        
-        
         mean = torch.stack(means).mean(dim=0).numpy()
         std = torch.stack(stds).mean(dim=0).numpy()
         
@@ -92,8 +90,18 @@ class ObjectDetectionDataset(Dataset):
                                     for image in os.listdir(synthetized_defects_folder) 
                                     if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
 
-        # Make the training less heavy
-        synthetized_defect_images = random.sample(synthetized_defect_images, len(synthetized_defect_images) // 5)
+        # Select only 1/5 of the total amount of images (the net takes a lot to train)
+        defect_groups = defaultdict(list)
+        for image in synthetized_defect_images:
+            defect_type = image.split('_')[-2]  # Extract defect type from filename
+            defect_groups[defect_type].append(image)
+
+        balanced_images = []
+        for defect_type, images in defect_groups.items():
+            sampled_images = random.sample(images, min(len(synthetized_defect_images) // 25, len(images)))
+            balanced_images.extend(sampled_images)
+        
+        synthetized_defect_images = balanced_images
 
         for image_path in synthetized_defect_images:
             data.append(

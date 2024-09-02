@@ -1,5 +1,5 @@
 from datasets.harmonization import HarmonizationDataset, HarmonizationDatasetSynthetic
-from datasets.classifier import ClassifierDataset, Defect
+from datasets.classification import ClassifierDataset, Defect
 from datasets.object_detection import ObjectDetectionDataset
 
 

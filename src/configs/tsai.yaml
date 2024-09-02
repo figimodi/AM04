@@ -12,7 +12,7 @@ model:
   only_test: False
 logger:
   log_dir: ./log
-  experiment_name: train_harmonization
+  experiment_name: train_tsai
   version: 1
 checkpoint:
   monitor: val_loss

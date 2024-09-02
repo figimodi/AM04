@@ -46,11 +46,10 @@ class MyFasterRCNN(nn.Module):
             num_classes=num_classes,
             rpn_anchor_generator=rpn_anchor_generator,
             box_roi_pool=roi_pooler,
-            box_detections_per_img=20,
         )
         
-        mean = [0.485]
-        std = [0.229]
+        mean = [0]
+        std = [1]
         transforms = GeneralizedRCNNTransform(800,1333,mean,std)
         self.model.transform = transforms
 

@@ -62,7 +62,6 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
     masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename ]
     nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg') or f.endswith('.png')]
     defect_types = list(set([f.split('_')[3].split('.')[0] for f in masks_paths]))
-    print(defect_types)
     data_faster_rcnn  = {}
 
     few = lambda: random.choice([1,2,3])
