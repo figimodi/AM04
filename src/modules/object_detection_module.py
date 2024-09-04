@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
+from cv2.dnn import NMSBoxes
 from typing import Tuple
 from pydantic import BaseModel
 from models import MyFasterRCNN
@@ -43,7 +44,6 @@ class ObjectDetectionModule(LightningModule):
         images, targets = batch
         loss_dict = self.model(images, targets)
         total_loss = sum(loss for loss in loss_dict.values())
-        
         self.log('train_loss', total_loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": total_loss}
     
@@ -58,7 +58,6 @@ class ObjectDetectionModule(LightningModule):
         images, targets = batch
         loss_dict , _ = self.model.eval_forward(images, targets)
         total_loss = sum(loss for loss in loss_dict.values())
-        
         self.log('val_loss', total_loss.item(), logger=True, prog_bar=True, on_step=False, on_epoch=True)
         return {"loss": total_loss}
 
@@ -76,11 +75,19 @@ class ObjectDetectionModule(LightningModule):
         return None
 
     def on_test_epoch_end(self):
-        threshold = 0.02
+        threshold = 0.5
+        nms_threshold = 0.2
         num_classes = 5
         ap_per_class = {k: 0 for k in range(num_classes)}
         occurances_per_class = {k: 0 for k in range(num_classes)}
-        predictions_per_class = {k: pd.DataFrame(columns=['iou', 'correct', 'precision', 'recall']) for k in range(num_classes)}
+        predictions_per_class = {
+            k: pd.DataFrame({
+                'iou': pd.Series(dtype='float64'),        
+                'correct': pd.Series(dtype='bool'),      
+                'precision': pd.Series(dtype='float64'), 
+                'recall': pd.Series(dtype='float64')  
+            }) for k in range(num_classes)
+        }
 
         # Check predictions
         for _, prediction, target in self.test_outputs:
@@ -100,7 +107,7 @@ class ObjectDetectionModule(LightningModule):
             ious = iou_values.numpy().reshape(-1, 1).flatten()
 
             # NMS to eliminate overlapping predictions
-            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(ious), threshold)
+            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(pred_scores), nms_threshold)
 
             for p in keep:
                 c = pred_labels[p]
@@ -116,7 +123,7 @@ class ObjectDetectionModule(LightningModule):
 
 
         for c in range(num_classes):
-            if len(predictions_per_class[c]) == 0:
+            if len(predictions_per_class[c]) < 2:
                 ap_per_class[c] = 0
                 continue
             predictions_per_class[c] = predictions_per_class[c].sort_values(by='iou', ascending=False)
@@ -126,8 +133,8 @@ class ObjectDetectionModule(LightningModule):
             for i, row in predictions_per_class[c].iterrows():
                 TP += row['correct']
                 FP += not row['correct']
-                row['recall'] = TP / occurances_per_class[c]
-                row['precision'] = TP / (TP + FP)
+                predictions_per_class[c].loc[i, 'recall'] = TP / occurances_per_class[c]
+                predictions_per_class[c].loc[i, 'precision'] = TP / (TP + FP)
 
             precision = predictions_per_class[c]['precision'].values
             recall = predictions_per_class[c]['recall'].values
@@ -135,6 +142,7 @@ class ObjectDetectionModule(LightningModule):
 
             # Average Precision
             ap_per_class[c] = pr_auc
+            self.log(f'AP{threshold} of class {c}', ap_per_class[c], logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
         mAP = np.array(list(ap_per_class.values())).mean()
         self.log(f'mAP@{threshold}', mAP, logger=True, prog_bar=True, on_step=False, on_epoch=True)
@@ -157,25 +165,34 @@ class ObjectDetectionModule(LightningModule):
             ious = iou_values.numpy().reshape(-1, 1).flatten()
 
             # NMS to eliminate overlapping predictions
-            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(ious), threshold)
+            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(pred_scores), nms_threshold)
 
             pred_boxes = pred_boxes[keep]
             pred_labels = pred_labels[keep]
+            ious = ious[keep]
+            corrects = corrects[keep]
+
+            if len(keep) == 1:
+                pred_boxes = [pred_boxes]
+                pred_labels = [pred_labels]
+                ious = [ious]
+                corrects = [corrects]
 
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
 
-            for box, label, iou in zip(pred_boxes, pred_labels, ious):
-                x_min, y_min, x_max, y_max = box
-                rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='blue', linewidth=1)
-                ax.add_patch(rect)
-                ax.text(x_min, y_min, f'{Defect(label).name} (iou={iou:.2f})', bbox=dict(facecolor='yellow', alpha=0.3), fontsize=6, color='blue')
+            for box, label, iou, correct in zip(pred_boxes, pred_labels, ious, corrects):
+                if iou > threshold and correct:
+                    x_min, y_min, x_max, y_max = box
+                    rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='blue', linewidth=1)
+                    ax.add_patch(rect)
+                    ax.text(x_min, y_min, f'{Defect(label).name} (iou={iou:.2f})', bbox=dict(facecolor='yellow', alpha=0.3), fontsize=6, color='blue')
 
             for box, label in zip(target_boxes, target_labels):
                 x_min, y_min, x_max, y_max = box
                 rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='red', linewidth=1)
                 ax.add_patch(rect)
-                ax.text(x_min, y_min, f'{Defect(label).name}', bbox=dict(facecolor='yellow', alpha=0.3), fontsize=6, color='red')
+                ax.text(x_max, y_max, f'{Defect(label).name}', bbox=dict(facecolor='yellow', alpha=0.3), fontsize=6, color='red')
 
             plt.suptitle(f'Result {i+1}')
             fig.canvas.draw()

@@ -3,11 +3,14 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 from utils import Parser
-from datasets import HarmonizationDatasetSynthetic
-from modules import HarmonizationModule
+from datasets import ObjectDetectionDataset
+from modules import ObjectDetectionModule
 import yaml
 import os
 
+
+def collate_fn(batch):
+    return tuple(zip(*batch))
 
 if __name__ == '__main__':
     # Get configuration arguments
@@ -15,38 +18,38 @@ if __name__ == '__main__':
     config, device = parser.parse_args()
 
     # Load sources
-    harmonization_dataset = HarmonizationDatasetSynthetic(defects_folder=config.dataset.defects_folder, defects_masks_folder=config.dataset.defects_masks_folder)
-    
+    classifier_dataset = ObjectDetectionDataset(
+        synthetized_defects_folder=config.dataset.synthetized_defects_folder,
+    )
+
     # Create train-val-test splits
-    splits = harmonization_dataset.create_splits(config.dataset.splits)
+    splits = classifier_dataset.create_splits(config.dataset.splits, config.model.annotations)
     _, _, test_split = splits
 
     # Instantiate Dataloaders for each split
-    test_dataloader = DataLoader(test_split, batch_size=config.model.batch_size, num_workers=4, persistent_workers=True)
+    test_dataloader = DataLoader(test_split, batch_size=config.model.batch_size, collate_fn=collate_fn, num_workers=4, persistent_workers=True)
 
     # Instantiate logger, logs goes into {config.logger.log_dir}/{config.logger.experiment_name}/version_{config.logger.version}
     logger = TensorBoardLogger(save_dir=config.logger.log_dir, version=config.logger.version, name=config.logger.experiment_name)
 
     # Load pretrained model or else start from scratch
     if config.model.pretrained is None:
-        module = HarmonizationModule(
-            name = config.model.name,
+        module = ObjectDetectionModule(
+            name=config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
             scheduler=config.model.scheduler,
-            save_images=config.model.save_images,
         )
     else:
-        module = HarmonizationModule.load_from_checkpoint(
-            name=config.model.name,
+        module = ObjectDetectionModule.load_from_checkpoint(
             map_location='cpu',
             checkpoint_path=config.model.pretrained,
+            name=config.model.name,
             epochs=config.model.epochs,
             lr=config.model.learning_rate,
             optimizer=config.model.optimizer,
             scheduler=config.model.scheduler,
-            save_images=config.model.save_images,
         )
 
     # Set callback function to save checkpoint of the model
@@ -77,6 +80,10 @@ if __name__ == '__main__':
     if not config.model.only_test:
         trainer.fit(model=module, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
+    # Get the best checkpoint path and load the best checkpoint for testing
+    best_checkpoint_path = checkpoint_cb.best_model_path
+    if best_checkpoint_path:
+        module = ObjectDetectionModule.load_from_checkpoint(name=config.model.name, checkpoint_path=best_checkpoint_path)
+
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)
-

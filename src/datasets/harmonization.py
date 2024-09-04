@@ -104,7 +104,7 @@ class HarmonizationDataset(Dataset):
         start_idx = 0
         for size in split_sizes:
             if size == 0:
-                splits.append(HarmonizationDatasetSplit(df.iloc[0]))
+                splits.append(None)
             else:
                 splits.append(HarmonizationDatasetSplit(df.iloc[start_idx:start_idx + size]))
                 start_idx += size

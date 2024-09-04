@@ -35,8 +35,6 @@ class ObjectDetectionDatasetSplit(Dataset):
         # Define transformations
         transform = transforms.Compose([
             transforms.Resize((512, 512)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.mean, std=self.std)
         ])
@@ -90,24 +88,10 @@ class ObjectDetectionDataset(Dataset):
                                     for image in os.listdir(synthetized_defects_folder) 
                                     if os.path.isfile(os.path.join(synthetized_defects_folder, image))]
 
-        # Select only 1/5 of the total amount of images (the net takes a lot to train)
-        defect_groups = defaultdict(list)
-        for image in synthetized_defect_images:
-            defect_type = image.split('_')[-2]  # Extract defect type from filename
-            defect_groups[defect_type].append(image)
-
-        balanced_images = []
-        for defect_type, images in defect_groups.items():
-            sampled_images = random.sample(images, min(len(synthetized_defect_images) // 25, len(images)))
-            balanced_images.extend(sampled_images)
-        
-        synthetized_defect_images = balanced_images
-
         for image_path in synthetized_defect_images:
             data.append(
                 {
                     'image_path': image_path,
-                    'label': Defect[os.path.splitext(image_path)[0].split('_')[-2].upper()].value,
                 }
             )
 
@@ -126,8 +110,11 @@ class ObjectDetectionDataset(Dataset):
         splits = list()
         start_idx = 0
         for size in split_sizes:
-            splits.append(ObjectDetectionDatasetSplit(df.iloc[start_idx:start_idx + size], annotations))
-            start_idx += size
+            if size == 0:
+                splits.append(None)
+            else:
+                splits.append(ObjectDetectionDatasetSplit(df.iloc[start_idx:start_idx + size], annotations))
+                start_idx += size
     
         return tuple(splits)    
 

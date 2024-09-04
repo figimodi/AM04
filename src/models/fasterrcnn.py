@@ -7,6 +7,7 @@ from torchvision.models.detection.backbone_utils import BackboneWithFPN
 from torchvision.models.detection.transform import GeneralizedRCNNTransform
 from typing import Tuple, List, Dict, Optional
 from torch import Tensor
+from models import ResNet18
 from collections import OrderedDict
 from torchvision.models.detection.roi_heads import fastrcnn_loss
 from torchvision.models.detection.rpn import concat_box_prediction_layers
@@ -16,21 +17,27 @@ class MyFasterRCNN(nn.Module):
     def __init__(self, num_classes=5):
         super(MyFasterRCNN, self).__init__()
 
-        resnet_net = torchvision.models.resnet18(pretrained=False)
-        resnet_net.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        resnet_net = ResNet18()
+        checkpoint = torch.load('C:/Users/grfil/Documents/GitHub/AM04/src/log/train_resnet_18_5c/version_2/epoch=148_val_loss=0.399691.ckpt', map_location=torch.device('cpu'))
+        state_dict = {}
+        for key in checkpoint['state_dict']:
+            new_key = key.replace('model.', '')
+            state_dict[new_key] = checkpoint['state_dict'][key]
+        # resnet_net.load_state_dict(checkpoint['state_dict'], strict=False)
+        resnet_net.load_state_dict(state_dict)
         modules = list(resnet_net.children())[:-2]
         backbone = nn.Sequential(*modules)
         
         backbone_with_fpn = BackboneWithFPN(
             backbone, 
-            return_layers={'layer1': '0', 'layer2': '1', 'layer3': '2', 'layer4': '3'},
+            return_layers={'4': '0', '5': '1', '6': '2', '7': '3'},
             in_channels_list=[64, 128, 256, 512],
             out_channels=512
         )
 
         # Define the Region Proposal Network (RPN) anchor generator
         rpn_anchor_generator = AnchorGenerator(
-            sizes= ((8,), (16,), (16,), (32,), (64,)),  # Sizes for each feature map
+            sizes= ((8,), (16,), (32,), (64,), (128,)),  # Sizes for each feature map
             aspect_ratios=((0.03, 1.0, 5, 10),) * 5  # Aspect ratios for each feature map
         )
 
@@ -53,18 +60,6 @@ class MyFasterRCNN(nn.Module):
         mean = [0]
         std = [1]
         transforms = GeneralizedRCNNTransform(800,1333,mean,std)
-        # transforms = GeneralizedRCNNTransform(
-        #     min_size=None,
-        #     max_size=None,
-        #     random_horizontal_flip=False,
-        #     random_vertical_flip=False,
-        #     random_rotation=0,
-        #     random_brightness=0,
-        #     random_contrast=0,
-        #     random_hue=0,
-        #     random_saturation=0,
-        #     normalize=(0, 1),
-        # )
         self.model.transform = transforms
 
     def forward(self, images, targets=None):

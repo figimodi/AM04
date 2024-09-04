@@ -19,8 +19,8 @@ def generate_pickle_faster_rcnn():
     data = {}
 
     for file_name in os.listdir(DEFECTS_DIR):
-        
-        data[file_name] = {
+        key = f'{file_name}.jpg'
+        data[key] = {
             'borders': [],
             'labels': []
         }
@@ -43,18 +43,18 @@ def generate_pickle_faster_rcnn():
                         
                         border = [top_left[0] * 512 / 1280, top_left[1] * 512 / 1024, bottom_right[0] * 512 / 1280, bottom_right[1] * 512 / 1024]
                         
-                        data[file_name]['borders'].append(border)
-                        data[file_name]['labels'].append(label)
+                        data[key]['borders'].append(border)
+                        data[key]['labels'].append(label)
                     except:
                         print('Error in file:', os.path.join(DEFECTS_MASKS_DIR, mask_folder, mask_file))
         
-        if len(data[file_name]['borders']) > 0:
-            data[file_name]['borders'] = torch.Tensor(data[file_name]['borders']).to(dtype=torch.float32)
-            data[file_name]['labels'] = torch.Tensor(data[file_name]['labels']).to(dtype=torch.int64)
+        if len(data[key]['borders']) > 0:
+            data[key]['borders'] = torch.Tensor(data[key]['borders']).to(dtype=torch.float32)
+            data[key]['labels'] = torch.Tensor(data[key]['labels']).to(dtype=torch.int64)
         else:
-            del data[file_name]
+            del data[key]
 
-    pickle.dump(data, open(os.path.join(DEFECTS_DIR, 'data_original_faster_rcnn.pkl'), 'wb'))
+    pickle.dump(data, open(os.path.join(DEFECTS_DIR, '..', 'data_original_faster_rcnn.pkl'), 'wb'))
     
 if __name__ == '__main__':
     generate_pickle_faster_rcnn()

@@ -1,0 +1,21 @@
+dataset:
+  synthetized_defects_folder: .\..\data\TestObjectDetection
+  splits: [0, 0, 1]
+model:
+  name: fasterrcnn
+  epochs: 20
+  batch_size: 4
+  learning_rate: 1e-5
+  optimizer: adam
+  scheduler: plateau
+  only_test: True
+  annotations: .\..\data\data_original_faster_rcnn.pkl
+logger:
+  log_dir: log
+  experiment_name: test_fasterrcnn
+  version: 1
+checkpoint:
+  monitor: val_loss
+  save_top_k: 3
+  mode: min
+  
