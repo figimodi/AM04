@@ -8,6 +8,7 @@ from cv2.dnn import NMSBoxes
 from typing import Tuple
 from pydantic import BaseModel
 from models import MyFasterRCNN
+from pathlib import Path
 from datasets import Defect
 from torchvision.ops import box_iou
 from sklearn.metrics import auc
@@ -20,13 +21,14 @@ class ObjectDetectionModule(LightningModule):
             epochs: int,
             lr: float, 
             optimizer: str, 
-            scheduler: str, 
+            scheduler: str,
+            pretrained_backbone: Path,
         ):
         super().__init__()
         self.save_hyperparameters()
 
         # Network
-        self.model = MyFasterRCNN(num_classes=5)  # Adjust num_classes as needed
+        self.model = MyFasterRCNN(pretrained_backbone=pretrained_backbone, num_classes=5)  # Adjust num_classes as needed
 
         # Training params
         self.epochs = epochs

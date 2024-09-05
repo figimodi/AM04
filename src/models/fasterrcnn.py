@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision
+from pathlib import Path
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.models.detection.backbone_utils import BackboneWithFPN
@@ -14,11 +15,11 @@ from torchvision.models.detection.rpn import concat_box_prediction_layers
 
 
 class MyFasterRCNN(nn.Module):
-    def __init__(self, num_classes=5):
+    def __init__(self, pretrained_backbone: Path, num_classes: int = 5):
         super(MyFasterRCNN, self).__init__()
 
         resnet_net = ResNet18()
-        checkpoint = torch.load('C:/Users/grfil/Documents/GitHub/AM04/src/log/train_resnet_18_5c/version_2/epoch=148_val_loss=0.399691.ckpt', map_location=torch.device('cpu'))
+        checkpoint = torch.load(pretrained_backbone, map_location=torch.device('cpu'))
         state_dict = {}
         for key in checkpoint['state_dict']:
             new_key = key.replace('model.', '')
