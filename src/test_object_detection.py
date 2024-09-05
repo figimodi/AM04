@@ -40,6 +40,7 @@ if __name__ == '__main__':
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
             scheduler=config.model.scheduler,
+            pretrained_backbone=config.model.pretrained_backbone
         )
     else:
         module = ObjectDetectionModule.load_from_checkpoint(
@@ -50,6 +51,7 @@ if __name__ == '__main__':
             lr=config.model.learning_rate,
             optimizer=config.model.optimizer,
             scheduler=config.model.scheduler,
+            pretrained_backbone=config.model.pretrained_backbone
         )
 
     # Set callback function to save checkpoint of the model
@@ -75,10 +77,6 @@ if __name__ == '__main__':
         num_sanity_val_steps=0, # Validation steps at the very beginning to check bugs without waiting for training
         reload_dataloaders_every_n_epochs=1,  # Reload the dataset to shuffle the order
     )
-
-    # Train
-    if not config.model.only_test:
-        trainer.fit(model=module, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
     # Get the best checkpoint path and load the best checkpoint for testing
     best_checkpoint_path = checkpoint_cb.best_model_path
