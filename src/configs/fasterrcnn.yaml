@@ -10,6 +10,7 @@ model:
   scheduler: plateau
   only_test: False
   annotations: .\..\data\data_faster_rcnn.pkl
+  pretrained_backbone: .\log\train_resnet_18_5c\version_2\epoch=148_val_loss=0.399691.ckpt
 logger:
   log_dir: log
   experiment_name: train_fasterrcnn

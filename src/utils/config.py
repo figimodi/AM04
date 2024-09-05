@@ -21,6 +21,7 @@ class ModelConfig(BaseModel):
     save_images: Optional[Path] = None
     pretrained: Optional[Path] = None
     annotations: Optional[Path] = None
+    pretrained_backbone: Optional[Path] = None
 
 class LoggerConfig(BaseModel):
     log_dir: Path
