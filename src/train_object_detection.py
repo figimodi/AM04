@@ -42,6 +42,7 @@ if __name__ == '__main__':
             lr=config.model.learning_rate, 
             optimizer=config.model.optimizer, 
             scheduler=config.model.scheduler,
+            pretrained_backbone=config.model.pretrained_backbone,
         )
     else:
         module = ObjectDetectionModule.load_from_checkpoint(
@@ -52,6 +53,7 @@ if __name__ == '__main__':
             lr=config.model.learning_rate,
             optimizer=config.model.optimizer,
             scheduler=config.model.scheduler,
+            pretrained_backbone=config.model.pretrained_backbone,
         )
 
     # Set callback function to save checkpoint of the model
