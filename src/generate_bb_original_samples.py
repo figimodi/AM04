@@ -9,9 +9,9 @@ from utils.guarantee_minimum_dimensions import guarantee_minimum_dimenions
 DEFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'Defects')
 DEFECTS_MASKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'DefectsMasks')
 
-MIN_DIM_HOLE = 40
-MIN_H_HORIZONTAL = 30
-MIN_W_VERTICAL = 10
+MIN_DIM_HOLE = 32
+MIN_H_HORIZONTAL = 15
+MIN_W_VERTICAL = 15
 
 class Defect(Enum):
     HOLE = 0
@@ -45,16 +45,16 @@ def generate_pickle_faster_rcnn():
                     try:  
                         min_y, min_x = np.min(true_points, axis=1) 
                         max_y, max_x = np.max(true_points, axis=1) 
-                        
-                        if label == 0: #HOLE
-                            min_x, min_y, max_x, max_y = guarantee_minimum_dimenions(min_x, min_y, max_x, max_y, min_dim_w=MIN_DIM_HOLE, min_dim_h=MIN_DIM_HOLE)
-                        elif label == 1: #VERTICAL
-                            min_x, min_y, max_x, max_y = guarantee_minimum_dimenions(min_x, min_y, max_x, max_y, min_dim_w=MIN_W_VERTICAL)
-                        elif label == 4: #HORIZONTAL
-                            min_x, min_y, max_x, max_y = guarantee_minimum_dimenions(min_x, min_y, max_x, max_y, min_dim_h=MIN_H_HORIZONTAL)
-                        
+                                            
                         border = [min_x * 512 / 1280, min_y * 512 / 1024, max_x * 512 / 1280, max_y * 512 / 1024]
                         
+                        if label == 0: #HOLE
+                            border = guarantee_minimum_dimenions(border, min_dim_w=MIN_DIM_HOLE, min_dim_h=MIN_DIM_HOLE)
+                        elif label == 1: #VERTICAL
+                            border = guarantee_minimum_dimenions(border, min_dim_w=MIN_W_VERTICAL)
+                        elif label == 4: #HORIZONTAL
+                            border = guarantee_minimum_dimenions(border, min_dim_h=MIN_H_HORIZONTAL)
+
                         data[key]['boxes'].append(border)
                         data[key]['labels'].append(label)
                     except:

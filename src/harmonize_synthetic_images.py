@@ -27,27 +27,17 @@ if __name__ == '__main__':
     # Instantiate logger, logs goes into {config.logger.log_dir}/{config.logger.experiment_name}/version_{config.logger.version}
     logger = TensorBoardLogger(save_dir=config.logger.log_dir, version=config.logger.version, name=config.logger.experiment_name)
 
-    # Load pretrained model or else start from scratch
-    if config.model.pretrained is None:
-        module = HarmonizationModule(
-            name = config.model.name,
-            epochs=config.model.epochs,
-            lr=config.model.learning_rate, 
-            optimizer=config.model.optimizer, 
-            scheduler=config.model.scheduler,
-            save_images=config.model.save_images,
-        )
-    else:
-        module = HarmonizationModule.load_from_checkpoint(
-            name=config.model.name,
-            map_location='cpu',
-            checkpoint_path=config.model.pretrained,
-            epochs=config.model.epochs,
-            lr=config.model.learning_rate,
-            optimizer=config.model.optimizer,
-            scheduler=config.model.scheduler,
-            save_images=config.model.save_images,
-        )
+    # Load pretrained model
+    module = HarmonizationModule.load_from_checkpoint(
+        name=config.model.name,
+        map_location='cpu',
+        checkpoint_path=config.model.pretrained,
+        epochs=config.model.epochs,
+        lr=config.model.learning_rate,
+        optimizer=config.model.optimizer,
+        scheduler=config.model.scheduler,
+        save_images=config.model.save_images,
+    )
 
     # Set callback function to save checkpoint of the model
     checkpoint_cb = ModelCheckpoint(
@@ -72,10 +62,6 @@ if __name__ == '__main__':
         num_sanity_val_steps=0, # Validation steps at the very beginning to check bugs without waiting for training
         reload_dataloaders_every_n_epochs=1,  # Reload the dataset to shuffle the order
     )
-
-    # Train
-    if not config.model.only_test:
-        trainer.fit(model=module, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
     # Test
     trainer.test(model=module, dataloaders=test_dataloader)

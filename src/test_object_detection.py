@@ -41,7 +41,6 @@ if __name__ == '__main__':
         lr=config.model.learning_rate,
         optimizer=config.model.optimizer,
         scheduler=config.model.scheduler,
-        pretrained=config.model.pretrained,
         pretrained_backbone=config.model.pretrained_backbone
     )
 

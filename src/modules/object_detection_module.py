@@ -23,7 +23,6 @@ class ObjectDetectionModule(LightningModule):
             lr: float, 
             optimizer: str, 
             scheduler: str,
-            pretrained: Path,
             pretrained_backbone: Path,
         ):
         super().__init__()
@@ -32,13 +31,6 @@ class ObjectDetectionModule(LightningModule):
         # Network
         self.model = MyFasterRCNN(pretrained_backbone=pretrained_backbone, num_classes=5)  # Adjust num_classes as needed
         
-        checkpoint = torch.load(pretrained, map_location=torch.device('cpu'))
-        state_dict = {}
-        for key in checkpoint['state_dict']:
-            new_key = key[6:]
-            state_dict[new_key] = checkpoint['state_dict'][key]
-        self.model.load_state_dict(state_dict)
-
         # Training params
         self.epochs = epochs
         self.lr = lr
