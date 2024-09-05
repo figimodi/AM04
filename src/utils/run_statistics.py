@@ -7,7 +7,10 @@ for folder in os.listdir(defects_masks_path):
     for file in os.listdir(os.path.join(defects_masks_path, folder)):
         if 'Mask' not in file:
             defect_type = file.split('_')[-1].split('.')[0]
-
+            image_number = int(file.split('_')[0].split('Image')[-1])
+            
+            if (image_number > 50 and 'Spattering' in file) or (image_number < 50 and 'Spattering' not in file):
+                continue
             if defect_type in defect_counts:
                 defect_counts[defect_type] += 1
             else:

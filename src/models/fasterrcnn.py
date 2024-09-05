@@ -18,6 +18,7 @@ class MyFasterRCNN(nn.Module):
         super(MyFasterRCNN, self).__init__()
 
         resnet_net = ResNet18()
+        
         checkpoint = torch.load('C:/Users/grfil/Documents/GitHub/AM04/src/log/train_resnet_18_5c/version_2/epoch=148_val_loss=0.399691.ckpt', map_location=torch.device('cpu'))
         state_dict = {}
         for key in checkpoint['state_dict']:
