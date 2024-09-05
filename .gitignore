@@ -31,3 +31,4 @@ data/SyntheticNoDefects/*
 data/data_faster_rcnn.pkl
 data/Defects/data_original_faster_rcnn.pkl
 data/SyntheticNoDefects
+data/*.pkl
