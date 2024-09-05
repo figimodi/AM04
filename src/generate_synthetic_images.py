@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import argparse
 import pickle
+from utils.guarantee_minimum_dimensions import guarantee_minimum_dimenions
 
 import torch
 
@@ -15,6 +16,7 @@ PATH_TO_NODEFECTS = os.path.join(ROOT_DIR, 'data', 'NoDefects')
 PATH_TO_SYNTHETIC = os.path.join(ROOT_DIR, 'data', 'SyntheticDefects')
 PATH_TO_SYNTHETIC_MASKS = os.path.join(ROOT_DIR, 'data', 'SyntheticDefectsMasks')
 PATH_TO_SYNTHETIC_DEFECTS_HARMONIZED = os.path.join(ROOT_DIR, 'data', 'SyntheticDefectsHarmonized')
+MIN_DIM_HOLE = 40
 
 #borders of the frame. X and Y coordinates (origin is TOP LEFT). Taken using paint (while moving the cursor gives x and y coordinates)
 FRAME_BORDERS = {
@@ -55,7 +57,6 @@ class Defect(Enum):
     INCANDESCENCE = 2
     SPATTERING = 3
     HORIZONTAL = 4
-    
     
 def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
     # probability of having few defects against having many defects (few and many defined next)
@@ -159,9 +160,12 @@ def main(samples_to_generate_per_defect = 10, probability_few_defects = .8):
                     else:
                         count_tries += 1
                 
+                if Defect[chosen_defect_type.upper()].value == Defect.HOLE.value:
+                    x_start, y_start, x_end, y_end = guarantee_minimum_dimenions(x_start, y_start, x_end, y_end, min_dim_w=MIN_DIM_HOLE, min_dim_h=MIN_DIM_HOLE)
+                
                 data_faster_rcnn_item["boxes"].append([x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024])
 
-                data_faster_rcnn_item["labels"].append(Defect[chosen_defect_type.upper()].value)
+                data_faster_rcnn_item["labels"].append()
                 
                 nodefect_image.paste(defect_image, (x_start - original_topleft_pos[1], y_start - original_topleft_pos[0]), defect_mask)
             
