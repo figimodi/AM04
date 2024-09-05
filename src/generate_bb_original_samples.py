@@ -25,7 +25,7 @@ def generate_pickle_faster_rcnn():
             'labels': []
         }
         
-        folders = [folder for folder in os.listdir(DEFECTS_DIR) if os.path.isdir(os.path.join(DEFECTS_DIR, folder))]
+        folders = [folder for folder in os.listdir(DEFECTS_DIR) if os.path.isdir(os.path.join(DEFECTS_DIR, folder)) and int(folder.split('Image')[-1]) < 50]
         
         for mask_folder in folders:
             for mask_file in os.listdir(os.path.join(DEFECTS_MASKS_DIR, mask_folder)):
