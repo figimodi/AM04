@@ -21,7 +21,7 @@ def generate_pickle_faster_rcnn():
     for file_name in os.listdir(DEFECTS_DIR):
         key = f'{file_name}.jpg'
         data[key] = {
-            'borders': [],
+            'boxes': [],
             'labels': []
         }
         
@@ -29,27 +29,27 @@ def generate_pickle_faster_rcnn():
         
         for mask_folder in folders:
             for mask_file in os.listdir(os.path.join(DEFECTS_MASKS_DIR, mask_folder)):
-                if '_PD_' in mask_file and file_name in mask_file:
+                if '_PD_' in mask_file and str(file_name) == str(mask_file.split('_')[0]):
                     parts = mask_file.split('_')
                     label = Defect[parts[3].split('.')[0].upper()].value
                     
                     mask_path = os.path.join(DEFECTS_MASKS_DIR, mask_folder, mask_file)
                     mask = np.array(Image.open(mask_path).convert('L'))
-                    true_points = np.argwhere(mask==255)
+                    true_points = np.nonzero(mask)
                     
                     try:  
-                        top_left = true_points.min(axis=0)
-                        bottom_right = true_points.max(axis=0)
+                        min_y, min_x = np.min(true_points, axis=1) 
+                        max_y, max_x = np.max(true_points, axis=1) 
+                                                
+                        border = [min_x * 512 / 1280, min_y * 512 / 1024, max_x * 512 / 1280, max_y * 512 / 1024]
                         
-                        border = [top_left[0] * 512 / 1280, top_left[1] * 512 / 1024, bottom_right[0] * 512 / 1280, bottom_right[1] * 512 / 1024]
-                        
-                        data[key]['borders'].append(border)
+                        data[key]['boxes'].append(border)
                         data[key]['labels'].append(label)
                     except:
                         print('Error in file:', os.path.join(DEFECTS_MASKS_DIR, mask_folder, mask_file))
         
-        if len(data[key]['borders']) > 0:
-            data[key]['borders'] = torch.Tensor(data[key]['borders']).to(dtype=torch.float32)
+        if len(data[key]['boxes']) > 0:
+            data[key]['boxes'] = torch.Tensor(data[key]['boxes']).to(dtype=torch.float32)
             data[key]['labels'] = torch.Tensor(data[key]['labels']).to(dtype=torch.int64)
         else:
             del data[key]

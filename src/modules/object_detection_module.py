@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from lightning.pytorch import LightningModule
+from pprint import pprint 
 from cv2.dnn import NMSBoxes
 from typing import Tuple
 from pydantic import BaseModel
@@ -22,6 +23,7 @@ class ObjectDetectionModule(LightningModule):
             lr: float, 
             optimizer: str, 
             scheduler: str,
+            pretrained: Path,
             pretrained_backbone: Path,
         ):
         super().__init__()
@@ -29,6 +31,13 @@ class ObjectDetectionModule(LightningModule):
 
         # Network
         self.model = MyFasterRCNN(pretrained_backbone=pretrained_backbone, num_classes=5)  # Adjust num_classes as needed
+        
+        checkpoint = torch.load(pretrained, map_location=torch.device('cpu'))
+        state_dict = {}
+        for key in checkpoint['state_dict']:
+            new_key = key[6:]
+            state_dict[new_key] = checkpoint['state_dict'][key]
+        self.model.load_state_dict(state_dict)
 
         # Training params
         self.epochs = epochs
@@ -144,7 +153,7 @@ class ObjectDetectionModule(LightningModule):
 
             # Average Precision
             ap_per_class[c] = pr_auc
-            self.log(f'AP{threshold} of class {c}', ap_per_class[c], logger=True, prog_bar=True, on_step=False, on_epoch=True)
+            self.log(f'AP@{threshold} of class {c}', ap_per_class[c], logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
         mAP = np.array(list(ap_per_class.values())).mean()
         self.log(f'mAP@{threshold}', mAP, logger=True, prog_bar=True, on_step=False, on_epoch=True)

@@ -9,6 +9,7 @@ model:
   optimizer: adam
   scheduler: plateau
   only_test: True
+  pretrained: .\log\train_fasterrcnn\version_1\epoch=014_val_loss=0.178030.ckpt
   annotations: .\..\data\data_original_faster_rcnn.pkl
   pretrained_backbone: .\log\train_resnet_18_5c\version_2\epoch=148_val_loss=0.399691.ckpt
 logger:
