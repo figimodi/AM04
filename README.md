@@ -32,13 +32,16 @@ First thing first, install all necessary libraries: `pip install -r requirements
 
 Then move to the directory `src/`:
 - Launch `python generate_color_transferred_images.py` to generate different combination of defects with color manipulation.
-- Launch the harmonization training of tsai network with: `python .\train_harmonization.py --config configs/harmonization.yaml`
+- Launch the harmonization training of tsai network with: `python .\train_harmonization.py --config configs/tsai.yaml`
 - Launch `python generate_synthetic_images.py --tot_samples {NUMBER}` to generate new synthetic images with defects.
-- Launch `python harmonize_synthetic_images.py --config configs/harmonization_synthetic.yaml --only_test --pretrained {MODEL}` to harmonize the synthetic images previously generated.
-- Launch `python .\train_classifier.py --config .\configs\resnet.yaml` to train the classifier with resnet, use `.\configs\lenet5.yaml` to use lenet5.
+- Launch `python harmonize_synthetic_images.py --config configs/tsai_synthetic.yaml --only_test --pretrained {MODEL}` to harmonize the synthetic images previously generated.
+- Launch `python .\train_classifier.py --config .\configs\resnet.yaml` to train the classifier with resnet, use `.\configs\googlenet.yaml` to use googlenet.
+- Launch `python .\train_object_detection.py --config .\configs\fasterrcnn.yaml` to train object_detection with fasterrcnn.
+- Launch `python generate_bb_original_samples.py` to generate the annotations of object detection (boxes and labels) of the real starting dataset.
+- Launch `python .\test_object_detection.py --config .\configs\fasterrcnn_test.yaml` to test object_detection with fasterrcnn on the real starting dataset.
 - See results using tensorboard: `tensorboard --logdir log --port {PORT}`
 
-It's possible also to launch the complete workflow with one command: `python .\full_workflow.py --config configs/full_workflow.yaml`
+It's possible also to launch these commands using GUIDE.ipynb
 
 *All the {VARIABLES} inside brackets are to be substituted with actual values
 

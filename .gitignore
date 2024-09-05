@@ -12,23 +12,17 @@ log/
 PDNPic/
 *.pdn
 
-# Sysntethic images
+# Synthetic images and annotations
 image[0-9]*_CT*
 image[0-9]*_CB*
 SyntheticDefects/
 SyntheticDefectsMasks/
 SyntheticDefectsHarmonized/
+SyntheticNoDefects/
 Image5[0-9]*/
+*.pkl
 
 # Debug files
 debug/
-*debug.yaml
 
-data_faster_rcnn.pkl
-data/main.py
-data/data_faster_rcnn.pkl
-data/SyntheticNoDefects/*
-data/data_faster_rcnn.pkl
-data/Defects/data_original_faster_rcnn.pkl
-data/SyntheticNoDefects
-data/*.pkl
+
