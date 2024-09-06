@@ -9,8 +9,8 @@ DEFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'da
 DEFECTS_MASKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'DefectsMasks')
 
 MIN_DIM_HOLE = 32
-MIN_H_HORIZONTAL = 15
-MIN_W_VERTICAL = 15
+MIN_H_HORIZONTAL = 0
+MIN_W_VERTICAL = 0
 
 class Defect(Enum):
     HOLE = 0
@@ -76,7 +76,7 @@ def generate_pickle_faster_rcnn():
                             border = guarantee_minimum_dimenions(border, min_dim_w=MIN_DIM_HOLE, min_dim_h=MIN_DIM_HOLE)
                         elif label == 1: #VERTICAL
                             border = guarantee_minimum_dimenions(border, min_dim_w=MIN_W_VERTICAL)
-                        elif label == 4: #HORIZONTAL
+                        elif label == 4: #HORIZONTAL / INCANDESCENCE
                             border = guarantee_minimum_dimenions(border, min_dim_h=MIN_H_HORIZONTAL)
 
                         data[key]['boxes'].append(border)
