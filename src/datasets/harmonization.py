@@ -50,8 +50,11 @@ class HarmonizationDataset(Dataset):
          
         for mask_folder in os.listdir(defects_masks_folder):
             image_number = int(mask_folder.split('Image')[-1])
-            for mask_file in os.listdir(os.path.join(defects_masks_folder, mask_folder)):
-                if (mask_file.endswith(".jpg") or mask_file.endswith(".png")) and 'Mask' not in mask_file and (image_number > 50 and 'Spattering' in mask_file) or (image_number < 50 and 'Spattering' not in mask_file):
+            mask_files_list = [mask_file for mask_file in os.listdir(os.path.join(defects_masks_folder, mask_folder))]
+            if len(mask_files_list) == 2:
+                mask_files_list = [mask_file for mask_file in mask_files_list if 'Mask' not in mask_file]
+            for mask_file in mask_files_list:
+                if mask_file.endswith(".png") and not ( image_number < 50 and 'Spattering' in mask_file ):
                     defect_masks[mask_file.split("_")[0]].append(os.path.join(defects_masks_folder, mask_folder, mask_file)) 
 
         for img_name in defect_masks.keys():
@@ -77,9 +80,9 @@ class HarmonizationDataset(Dataset):
                     img_name = img_metadata[0]
                     img_mask_id = int(img_metadata[2])
 
-                    mask_image = [s for s in defect_masks[img_name] if ('CB' in s.split('_')[-2] and img_mask_id == int(s.split('_')[-1].split('.')[0])) or ('CB' not in s.split('_')[-2] and img_mask_id == int(s.split('_')[-2]))][0]
+                    mask_image = [s for s in defect_masks[img_name] if (('CB' in s.split('_')[-2] or 'Mask' in s.split('_')[-2]) and img_mask_id == int(s.split('_')[-1].split('.')[0])) or (('CB' not in s.split('_')[-2] and 'Mask' not in s.split('_')[-2]) and img_mask_id == int(s.split('_')[-2]))][0]
 
-                    if 'CB' in mask_image.split('_')[-2]:
+                    if 'CB' in mask_image.split('_')[-2] or 'Mask' in mask_image.split('_')[-2]:
                         assert img_mask_id == int(mask_image.split('_')[-1].split('.')[0])
                     else:
                         assert img_mask_id == int(mask_image.split('_')[-2])

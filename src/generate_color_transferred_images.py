@@ -48,8 +48,8 @@ def main():
                 mask_combinations_i_cdm = combinations(masks_filenames_list, i_cdm)    
                 masks_filenames_combinations_list.extend(mask_combinations_i_cdm) # list of sublists (each sublist tells the combination of defect masks)
                 
-        if len(masks_filenames_list) > 1 and os.path.isfile(os.path.join(PATH_MASK, mask_folder, f'{mask_folder}_Mask_01.png')):
-            masks_filenames_combinations_list.append([ f'{mask_folder}_Mask_01.png' ] )
+        if len(masks_filenames_list) > 1 and os.path.isfile(os.path.join(PATH_MASK, mask_folder, f'{mask_folder}_Mask_00.png')):
+            masks_filenames_combinations_list.append([ f'{mask_folder}_Mask_00.png' ] )
         
         highest_mask_id = max([int(mask_filename.split('_')[2].split('.')[0]) for mask_filename in masks_filenames_list])
         combination_counter = 0

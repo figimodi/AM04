@@ -36,7 +36,7 @@ class Defect(Enum):
 few = lambda: random.choice([1,2,3])
 many = lambda: random.choice([4,5,6])
 
-masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if (mask_filename.endswith('.jpg') or mask_filename.endswith('.png')) and '_PD_' in mask_filename and ((int(mask_folder.split('Image')[-1]) > 50 and 'Spattering' in mask_filename) or (int(mask_folder.split('Image')[-1]) < 50 and 'Spattering' not in mask_filename))]
+masks_paths = [ os.path.join(PATH_TO_MASKS, mask_folder, mask_filename) for mask_folder in os.listdir(PATH_TO_MASKS) if os.path.isdir(os.path.join(PATH_TO_MASKS, mask_folder)) for mask_filename in os.listdir(os.path.join(PATH_TO_MASKS, mask_folder)) if mask_filename.endswith('.png') and '_PD_' in mask_filename and not ('Spattering' in mask_filename and int(mask_folder.split('Image')[-1]) < 50 ) ]
 
 nodefects_filenames = [f for f in os.listdir(PATH_TO_NODEFECTS) if f.endswith('.jpg') ]
 defect_types = [d.name.title() for d in Defect]
@@ -87,6 +87,9 @@ def single_defect_type_generation(num_tot_samples):
             
             number_of_defects = choose_how_many_defects() if 'Vertical' not in chosen_defect_type else random.randint(1,2)
             
+            if random.random() > .95 and chosen_defect_type == Defect.INCANDESCENCE.name.title():  
+                number_of_defects = 15
+            
             current_whole_mask = None
             
             synthetic_image_name = f'{nodefect_name}_{chosen_defect_type}_{i_th_generation}.jpg'
@@ -103,8 +106,8 @@ def single_defect_type_generation(num_tot_samples):
                 defect_mask = Image.open(defect_mask_path).convert('L')
                 
                 if os.path.basename(defect_mask_path) == 'Image43_PD_05_Vertical.png':
-                    defect_image = defect_image.rotate(-3)
-                    defect_mask = defect_mask.rotate(-3)
+                    defect_image = defect_image.rotate(-1.7)
+                    defect_mask = defect_mask.rotate(-1.7)
                     original_side_is_right = True
                     
                 if os.path.basename(defect_mask_path) == 'Image34_PD_02_Vertical.png':
@@ -119,8 +122,12 @@ def single_defect_type_generation(num_tot_samples):
                 count_tries = 0
                 while count_tries < 10:
 
-                    x_start = random.randint(FRAME_BORDERS['L'], FRAME_BORDERS['R'] - cropped_mask.shape[1])
-                    y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - cropped_mask.shape[0])
+                    if chosen_defect_type == Defect.VERTICAL.name.title():
+                        x_start = random.randint(FRAME_BORDERS['L'] + 10, FRAME_BORDERS['L'] + 60) if random.randint(1,2)%2==0 else random.randint(FRAME_BORDERS['R'] - 80, FRAME_BORDERS['R'] - 50)
+                        y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - cropped_mask.shape[0])
+                    else:
+                        x_start = random.randint(FRAME_BORDERS['L'], FRAME_BORDERS['R'] - cropped_mask.shape[1])
+                        y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - cropped_mask.shape[0])
                     
                     test_mask = np.zeros((nodefect_image.size[1], nodefect_image.size[0]), dtype=np.uint8)
                     
