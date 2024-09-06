@@ -10,8 +10,8 @@ DEFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'da
 DEFECTS_MASKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'DefectsMasks')
 
 MIN_DIM_HOLE = 32
-MIN_H_HORIZONTAL = 15
-MIN_W_VERTICAL = 15
+MIN_H_HORIZONTAL = 0
+MIN_W_VERTICAL = 0
 
 class Defect(Enum):
     HOLE = 0
