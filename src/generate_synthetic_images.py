@@ -114,18 +114,18 @@ def single_defect_type_generation(num_tot_samples):
                     
                 #get the top left coordinates of the mask
                 original_topleft_pos = get_pos_topleft(np.array(defect_mask))
-                proto_cropped_mask = crop_image(np.array(defect_mask))
+                cropped_mask = crop_image(np.array(defect_mask))
                 
                 count_tries = 0
                 while count_tries < 10:
 
-                    x_start = random.randint(FRAME_BORDERS['L'], FRAME_BORDERS['R'] - proto_cropped_mask.shape[1])
-                    y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - proto_cropped_mask.shape[0])
+                    x_start = random.randint(FRAME_BORDERS['L'], FRAME_BORDERS['R'] - cropped_mask.shape[1])
+                    y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - cropped_mask.shape[0])
                     
                     test_mask = np.zeros((nodefect_image.size[1], nodefect_image.size[0]), dtype=np.uint8)
                     
-                    x_end = x_start + proto_cropped_mask.shape[1]
-                    y_end = y_start + proto_cropped_mask.shape[0]
+                    x_end = x_start + cropped_mask.shape[1]
+                    y_end = y_start + cropped_mask.shape[0]
                     
                     current_side_is_right = False if (x_start+x_end)//2 < 760 else True
                 
@@ -139,13 +139,13 @@ def single_defect_type_generation(num_tot_samples):
                             x_start = x_start + 20
                         
                         original_topleft_pos = get_pos_topleft(np.array(defect_mask))
-                        flipped_mask = crop_image(np.array(defect_mask))
-                        x_end = x_start + flipped_mask.shape[1]
-                        y_end = y_start + flipped_mask.shape[0]
+                        flipped_cropped_mask = crop_image(np.array(defect_mask))
+                        x_end = x_start + flipped_cropped_mask.shape[1]
+                        y_end = y_start + flipped_cropped_mask.shape[0]
                         
-                        test_mask[y_start:y_end, x_start:x_end] = flipped_mask
+                        test_mask[y_start:y_end, x_start:x_end] = flipped_cropped_mask
                     else:     
-                        test_mask[y_start:y_end, x_start:x_end] = proto_cropped_mask
+                        test_mask[y_start:y_end, x_start:x_end] = cropped_mask
                     
                     if not np.any(test_mask*current_whole_mask) or i_number_of_defects==0:
                         current_whole_mask = (current_whole_mask > 127).astype(np.uint8) * 255
@@ -199,8 +199,11 @@ def multi_defect_type_generation(num_tot_samples):
         
         data_faster_rcnn_item = { "boxes":  [], "labels": [] }
         
+        if random.random() > .95:  
+            number_of_defects = 15
+            
         for i_th_defect in range(number_of_defects):
-            chosen_defect_type = random.choice(defect_types)
+            chosen_defect_type = random.choice(defect_types) if number_of_defects < 10 else Defect.INCANDESCENCE.name.title()
             
             if i_th_defect == 0:
                 current_whole_mask = np.zeros((nodefect_image.size[1], nodefect_image.size[0]), dtype=np.uint8)
@@ -213,8 +216,8 @@ def multi_defect_type_generation(num_tot_samples):
             defect_mask = Image.open(defect_mask_path).convert('L')
             
             if os.path.basename(defect_mask_path) == 'Image43_PD_05_Vertical.png':
-                defect_image = defect_image.rotate(-3)
-                defect_mask = defect_mask.rotate(-3)
+                defect_image = defect_image.rotate(-1.7)
+                defect_mask = defect_mask.rotate(-1.7)
                 original_side_is_right = True
                 
             if os.path.basename(defect_mask_path) == 'Image34_PD_02_Vertical.png':
@@ -224,38 +227,35 @@ def multi_defect_type_generation(num_tot_samples):
                 
             #get the top left coordinates of the mask
             original_topleft_pos = get_pos_topleft(np.array(defect_mask))
-            proto_cropped_mask = crop_image(np.array(defect_mask))
+            cropped_mask = crop_image(np.array(defect_mask))
             
             count_tries = 0
             while count_tries < 10:
-
-                x_start = random.randint(FRAME_BORDERS['L'], FRAME_BORDERS['R'] - proto_cropped_mask.shape[1])
-                y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - proto_cropped_mask.shape[0])
+                
+                if chosen_defect_type == Defect.VERTICAL.name.title():
+                    x_start = random.randint(FRAME_BORDERS['L'] + 10, FRAME_BORDERS['L'] + 60) if random.randint(1,2)%2==0 else random.randint(FRAME_BORDERS['R'] - 80, FRAME_BORDERS['R'] - 50)
+                    y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - cropped_mask.shape[0])
+                else:
+                    x_start = random.randint(FRAME_BORDERS['L'], FRAME_BORDERS['R'] - cropped_mask.shape[1])
+                    y_start = random.randint(FRAME_BORDERS['T'], FRAME_BORDERS['B'] - cropped_mask.shape[0])
                 
                 test_mask = np.zeros((nodefect_image.size[1], nodefect_image.size[0]), dtype=np.uint8)
                 
-                x_end = x_start + proto_cropped_mask.shape[1]
-                y_end = y_start + proto_cropped_mask.shape[0]
+                x_end = x_start + cropped_mask.shape[1]
+                y_end = y_start + cropped_mask.shape[0]
                 
-                current_side_is_right = False if (x_start+x_end)//2 < 760 else True
+                current_side_is_right = True if (x_start+x_end)//2 >= 760 else False
             
-                if 'Vertical' in chosen_defect_type and original_side_is_right != current_side_is_right:
+                if chosen_defect_type == Defect.VERTICAL.name.title() and original_side_is_right != current_side_is_right:
                     defect_mask = Image.fromarray(np.fliplr(defect_mask))
                     defect_image = Image.fromarray(np.fliplr(defect_image))
                     
-                    if current_side_is_right:
-                        x_start = x_start - 20
-                    else:
-                        x_start = x_start + 20
-                    
                     original_topleft_pos = get_pos_topleft(np.array(defect_mask))
-                    flipped_mask = crop_image(np.array(defect_mask))
-                    x_end = x_start + flipped_mask.shape[1]
-                    y_end = y_start + flipped_mask.shape[0]
-                    
-                    test_mask[y_start:y_end, x_start:x_end] = flipped_mask
-                else:     
-                    test_mask[y_start:y_end, x_start:x_end] = proto_cropped_mask
+                    cropped_mask = crop_image(np.array(defect_mask))
+                    x_end = x_start + cropped_mask.shape[1]
+                    y_end = y_start + cropped_mask.shape[0]
+                
+                test_mask[y_start:y_end, x_start:x_end] = cropped_mask
                 
                 if not np.any(test_mask*current_whole_mask) or i_th_defect==0:
                     current_whole_mask = (current_whole_mask > 127).astype(np.uint8) * 255
@@ -265,16 +265,17 @@ def multi_defect_type_generation(num_tot_samples):
                 else:
                     count_tries += 1
                     
-            topLeft_bottomRight = [x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024]
-            
-            if Defect[chosen_defect_type.upper()].value == Defect.HOLE.value:
-                topLeft_bottomRight = guarantee_minimum_dimenions(*topLeft_bottomRight, min_dim_w=MIN_DIM_HOLE, min_dim_h=MIN_DIM_HOLE)
-            
-            data_faster_rcnn_item["boxes"].append(topLeft_bottomRight)
+            if count_tries != 10:
+                topLeft_bottomRight = [x_start * 512 / 1280, y_start * 512 / 1024, x_end * 512 / 1280, y_end * 512 / 1024]
+                
+                if Defect[chosen_defect_type.upper()].value == Defect.HOLE.value:
+                    topLeft_bottomRight = guarantee_minimum_dimenions(*topLeft_bottomRight, min_dim_w=MIN_DIM_HOLE, min_dim_h=MIN_DIM_HOLE)
+                
+                data_faster_rcnn_item["boxes"].append(topLeft_bottomRight)
 
-            data_faster_rcnn_item["labels"].append(Defect[chosen_defect_type.upper()].value)
-            
-            nodefect_image.paste(defect_image, (x_start - original_topleft_pos[1], y_start - original_topleft_pos[0]), defect_mask)
+                data_faster_rcnn_item["labels"].append(Defect[chosen_defect_type.upper()].value)
+                
+                nodefect_image.paste(defect_image, (x_start - original_topleft_pos[1], y_start - original_topleft_pos[0]), defect_mask)
             
         data_faster_rcnn_item["boxes"] = torch.tensor(data_faster_rcnn_item["boxes"]).to(torch.float32)
         data_faster_rcnn_item["labels"] = torch.tensor(data_faster_rcnn_item["labels"]).to(torch.int64)
