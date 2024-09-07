@@ -94,7 +94,7 @@ if __name__ == '__main__':
         
         #save spattering masks
         newdefect_mask_filename = f'{foldername}_PD_01_Spattering.png'
-        newdefect_mask_union_filename = f'{foldername}_Mask_01.png'
+        newdefect_mask_union_filename = f'{foldername}_Mask_00.png'
         os.makedirs(os.path.join(DEFECTS_MASKS_PATH, foldername), exist_ok=True)
         spattering_mask.save(os.path.join(DEFECTS_MASKS_PATH, foldername, newdefect_mask_filename))
         spattering_mask.save(os.path.join(DEFECTS_MASKS_PATH, foldername, newdefect_mask_union_filename))
