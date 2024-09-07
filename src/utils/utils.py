@@ -1,11 +1,72 @@
-import numpy as np
 import cv2
+import numpy as np
 import random
-import argparse
+import os
+from PIL import Image, ImageEnhance
 from scipy.spatial.distance import cdist
-from PIL import Image
-import matplotlib.pyplot as plt
 
+
+def apply_color_transfer(image, mask):
+    manipulated_images = []
+    
+    masked_image = Image.new("RGB", image.size, (0, 0, 0))
+    masked_image.paste(image, (0, 0), mask)
+    
+    br_enhancer = ImageEnhance.Brightness(masked_image)
+    co_enhancer = ImageEnhance.Contrast(masked_image)
+    #sa_enhancer = ImageEnhance.Color(masked_image)
+    
+    #TODO: choose better strategies
+    strategies = [
+        (lambda: co_enhancer.enhance(.8)),
+        (lambda: co_enhancer.enhance(.85)),
+        (lambda: co_enhancer.enhance(.9)),
+        (lambda: co_enhancer.enhance(.95)),
+        (lambda: co_enhancer.enhance(1.05)),
+        (lambda: co_enhancer.enhance(1.1)),
+        (lambda: co_enhancer.enhance(1.15)),
+        (lambda: co_enhancer.enhance(1.2)),
+    ]
+    
+    for strategy in strategies:
+        manipulated_masked_image = strategy()
+        
+        manipulated_image = image.copy()
+        manipulated_image.paste(manipulated_masked_image, (0, 0), mask)
+        
+        manipulated_images.append(manipulated_image)
+        
+    return manipulated_images
+    
+def guarantee_minimum_dimenions(min_x, min_y, max_x, max_y, min_dim_w=None, min_dim_h=None):
+    if min_dim_w:
+        width = max_x - min_x
+        
+        inc_x = ((min_dim_w - width) // 2) if (min_dim_w - width // 2) > 0 else 0
+
+        min_x -= inc_x
+        max_x += inc_x
+        
+        max_x = max_x + 1 if (min_dim_w - width)%2 == 1 else max_x
+        
+    if min_dim_h:        
+        height = max_y - min_y
+        
+        inc_y = ((min_dim_h - height) // 2) if (min_dim_h - height // 2) > 0 else 0
+        
+        min_y -= inc_y
+        max_y += inc_y
+        
+        max_y = max_y + 1 if (min_dim_h - height)%2 == 1 else max_y
+
+    return min_x, min_y, max_x, max_y
+
+def recurive_rename(folder):
+    for element in folder:
+        if os.path.isfile(element):
+            os.rename(element, os.path.splitext(element)[0] + '.png')
+        elif os.path.isdir(element):
+            recurive_rename(element)
 
 def generate_random_points(min_dist, max_points): 
     min_c, max_c = 500, 1040
@@ -77,54 +138,3 @@ def generate_images_with_random_proliferation(min_dist, max_points, max_spread, 
     binary_image = np.any(gray_image_rgb < 255, axis=-1).astype(np.uint8) * 255
     
     return gray_image_rgb, binary_image
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Generate synthetic images')
-    parser.add_argument('--min_dist', type=int, help='Minimum distance between points', dest='MIN_DIST', default=0)    
-    parser.add_argument('--max_points', type=int, help='Max number of points in the area', dest='MAX_POINTS', default=400)    
-    parser.add_argument('--max_spread', type=int, help='Maximum spread among points', dest='MAX_SPREAD', default=10)    
-    parser.add_argument('--darkest_gray', type=int, help='The hexadecimal value for the darkest gray', dest='DARKEST_GRAY', default=160)    
-    parser.add_argument('--lightest_gray', type=int, help='The hexadecimal value for the lightest gray', dest='LIGHTEST_GRAY', default=170)    
-    args = parser.parse_args()
-
-    # Load the mask from a PNG file
-    mask_path = '../../data/DefectsMasks/Image23/Image23_Mask_0.png'  # Replace with your PNG file path
-    mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-
-    # Ensure the mask is binary (i.e., only 0 or 255 values)
-    _, mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
-
-    # Generate images with the given parameters
-    gray_image_rgb, binary_image = generate_images_with_random_proliferation( 
-        mask, min_dist=args.MIN_DIST, max_points=args.MAX_POINTS, max_spread=args.MAX_SPREAD, darkest_gray=args.DARKEST_GRAY, lightest_gray=args.LIGHTEST_GRAY 
-    )
-
-    # rgb_path = 'data\Spattering\Spattering.png'
-    # binary_path = 'data\Spattering\Mask.png'
-
-    # cv2.imwrite(rgb_path, gray_image_rgb)
-    # cv2.imwrite(binary_path, binary_image)
-
-    # Plot the results
-    # plt.figure(figsize=(12, 6))
-    # plt.subplot(1, 3, 1)
-    # plt.imshow(mask, cmap='gray')
-    # plt.title('Original Mask Image')
-
-    # plt.subplot(1, 3, 2)
-    # plt.imshow(gray_image_rgb)
-    # plt.title('RGB Image with Random Proliferation')
-
-    # plt.subplot(1, 3, 3)
-    # plt.imshow(binary_image, cmap='gray')
-    # plt.title('Binary Image from Proliferation')
-
-    plt.figure(figsize=(8,8))
-    nodefect_image = Image.fromarray(gray_image_rgb).convert('RGB') 
-    mask = Image.fromarray(binary_image).convert('L') 
-    background = Image.open('../../data/NoDefects/Image1.jpg').convert('RGB') 
-    background.paste(nodefect_image, (0, 0), mask) 
-    plt.imshow(background)
-    plt.title('Example')
-
-    plt.show()

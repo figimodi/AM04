@@ -78,22 +78,29 @@ class ObjectDetectionModule(LightningModule):
         return None
 
     def on_test_epoch_end(self):
-        threshold = 0.5
+        thresholds = [0.5, 0.6, 0.7, 0.8, 0.9]
         nms_threshold = 0.2
         num_classes = 5
-        ap_per_class = {k: 0 for k in range(num_classes)}
+        ap_per_class = {
+            t: {
+                k: 0 for k in range(num_classes)
+            } for t in thresholds
+        }
         occurances_per_class = {k: 0 for k in range(num_classes)}
         predictions_per_class = {
-            k: pd.DataFrame({
-                'iou': pd.Series(dtype='float64'),        
-                'correct': pd.Series(dtype='bool'),      
-                'precision': pd.Series(dtype='float64'), 
-                'recall': pd.Series(dtype='float64')  
-            }) for k in range(num_classes)
+            t: {
+                c: pd.DataFrame({
+                    'score': pd.Series(dtype='float64'),
+                    'iou': pd.Series(dtype='float64'),        
+                    'correct': pd.Series(dtype='bool'),      
+                    'precision': pd.Series(dtype='float64'), 
+                    'recall': pd.Series(dtype='float64')  
+                }) for c in range(num_classes)
+            } for t in thresholds
         }
 
         # Check predictions
-        for _, prediction, target in self.test_outputs:
+        for i, (image, prediction, target) in enumerate(self.test_outputs):
             pred_boxes = prediction['boxes'].cpu().detach().numpy()
             pred_labels = prediction['labels'].cpu().detach().numpy()
             pred_scores = prediction['scores'].cpu().detach().numpy()
@@ -114,61 +121,11 @@ class ObjectDetectionModule(LightningModule):
 
             for p in keep:
                 c = pred_labels[p]
-                if ious[p] > threshold:
-                    new_row = {'iou': ious[p], 'correct': corrects[p], 'precision': 0, 'recall': 0}
-                    predictions_per_class[c].loc[len(predictions_per_class[c])] = new_row
-                    predictions_per_class[c] = predictions_per_class[c].reset_index(drop=True)
-
-            unique_labels, counts = np.unique(target_labels, return_counts=True)
-            label_counts = dict(zip(unique_labels, counts))
-            for label, count in label_counts.items():
-                occurances_per_class[label] += count
-
-
-        for c in range(num_classes):
-            if len(predictions_per_class[c]) < 2:
-                ap_per_class[c] = 0
-                continue
-            predictions_per_class[c] = predictions_per_class[c].sort_values(by='iou', ascending=False)
-            TP = 0
-            FP = 0
-
-            for i, row in predictions_per_class[c].iterrows():
-                TP += row['correct']
-                FP += not row['correct']
-                predictions_per_class[c].loc[i, 'recall'] = TP / occurances_per_class[c]
-                predictions_per_class[c].loc[i, 'precision'] = TP / (TP + FP)
-
-            precision = predictions_per_class[c]['precision'].values
-            recall = predictions_per_class[c]['recall'].values
-            pr_auc = auc(recall, precision)
-
-            # Average Precision
-            ap_per_class[c] = pr_auc
-            self.log(f'AP@{threshold} of class {c}', ap_per_class[c], logger=True, prog_bar=True, on_step=False, on_epoch=True)
-
-        mAP = np.array(list(ap_per_class.values())).mean()
-        self.log(f'mAP@{threshold}', mAP, logger=True, prog_bar=True, on_step=False, on_epoch=True)
-
-        # Visualize predictions
-        for i, (image, prediction, target) in enumerate(self.test_outputs):
-            pred_boxes = prediction['boxes'].cpu().detach().numpy()
-            pred_labels = prediction['labels'].cpu().detach().numpy()
-            pred_scores = prediction['scores'].cpu().detach().numpy()
-
-            target_boxes = target['boxes'].cpu().detach().numpy()
-            target_labels = target['labels'].cpu().detach().numpy()
-
-            # For each prediction check if it's correct
-            ious = box_iou(torch.Tensor(pred_boxes), torch.Tensor(target_boxes))
-            target_idx = np.argmax(ious, axis=1)
-            corrects = pred_labels == target_labels[target_idx]
-            
-            iou_values = ious[np.arange(ious.shape[0]), target_idx]
-            ious = iou_values.numpy().reshape(-1, 1).flatten()
-
-            # NMS to eliminate overlapping predictions
-            keep = torchvision.ops.nms(torch.Tensor(pred_boxes), torch.Tensor(pred_scores), nms_threshold)
+                for t in thresholds:
+                    if ious[p] > t:
+                        new_row = {'score': pred_scores[p], 'iou': ious[p], 'correct': corrects[p], 'precision': 0, 'recall': 0}
+                        predictions_per_class[t][c].loc[len(predictions_per_class[t][c])] = new_row
+                        predictions_per_class[t][c] = predictions_per_class[t][c].reset_index(drop=True)
 
             pred_boxes = pred_boxes[keep]
             pred_labels = pred_labels[keep]
@@ -181,11 +138,12 @@ class ObjectDetectionModule(LightningModule):
                 ious = [ious]
                 corrects = [corrects]
 
+            # Visualize predictions
             fig, ax = plt.subplots(figsize=(6, 6))
             ax.imshow(image.permute(1, 2, 0).cpu().numpy(), cmap='gray')
 
             for box, label, iou, correct in zip(pred_boxes, pred_labels, ious, corrects):
-                if iou > threshold and correct:
+                if iou > thresholds[0] and correct:
                     x_min, y_min, x_max, y_max = box
                     rect = plt.Rectangle((x_min, y_min), x_max - x_min, y_max - y_min, fill=False, color='blue', linewidth=1)
                     ax.add_patch(rect)
@@ -210,6 +168,41 @@ class ObjectDetectionModule(LightningModule):
             self.logger.experiment.add_image(f'Comparison_{i+1}.png', plot_image, self.current_epoch, dataformats='HWC')
 
             plt.close(fig)
+
+            unique_labels, counts = np.unique(target_labels, return_counts=True)
+            label_counts = dict(zip(unique_labels, counts))
+            for label, count in label_counts.items():
+                occurances_per_class[label] += count
+
+
+        for t in thresholds:
+            for c in range(num_classes):
+                if len(predictions_per_class[t][c]) < 2:
+                    defect = str(Defect(c).name)
+                    ap_per_class[t][c] = 0
+                    self.log(f'AP@{t} for class {defect}', round(ap_per_class[t][c], 2), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+                    continue
+                predictions_per_class[t][c] = predictions_per_class[t][c].sort_values(by='score', ascending=False)
+                TP = 0
+                FP = 0
+
+                for i, row in predictions_per_class[t][c].iterrows():
+                    TP += row['correct']
+                    FP += not row['correct']
+                    predictions_per_class[t][c].loc[i, 'recall'] = TP / occurances_per_class[c]
+                    predictions_per_class[t][c].loc[i, 'precision'] = TP / (TP + FP)
+
+                precision = predictions_per_class[t][c]['precision'].values
+                recall = predictions_per_class[t][c]['recall'].values
+                pr_auc = auc(recall, precision)
+
+                # Average Precision
+                ap_per_class[t][c] = pr_auc
+                defect = str(Defect(c).name)
+                self.log(f'AP@{t} for class {defect}', round(ap_per_class[t][c]*100, 2), logger=True, prog_bar=True, on_step=False, on_epoch=True)
+
+            mAP = np.array(list(ap_per_class[t].values())).mean()
+            self.log(f'mAP@{t}', round(mAP*100, 2), logger=True, prog_bar=True, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         scheduler = None

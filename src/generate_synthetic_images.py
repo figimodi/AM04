@@ -5,7 +5,7 @@ from PIL import Image
 import numpy as np
 import argparse
 import pickle
-from utils.guarantee_minimum_dimensions import guarantee_minimum_dimenions
+from utils.utils import guarantee_minimum_dimenions
 
 import torch
 

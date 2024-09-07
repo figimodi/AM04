@@ -1,6 +1,6 @@
 import os
 import random
-from utils.color_transfering import apply_color_transfer
+from utils.utils import apply_color_transfer
 from itertools import combinations
 from PIL import Image
 import numpy as np

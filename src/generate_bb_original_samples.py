@@ -4,7 +4,7 @@ from PIL import Image
 import pickle
 import numpy as np
 import torch
-from utils.guarantee_minimum_dimensions import guarantee_minimum_dimenions
+from utils.utils import guarantee_minimum_dimenions
 
 DEFECTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'Defects')
 DEFECTS_MASKS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'DefectsMasks')
