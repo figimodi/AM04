@@ -14,6 +14,13 @@ class TSAINetworkV1(torch.nn.Module):
         self.conv5 = torch.nn.Conv2d(128, 256, kernel_size=4, padding=1, stride=2)
         self.conv6 = torch.nn.Conv2d(256, 256, kernel_size=4, padding=1, stride=2)
         self.conv7 = torch.nn.Conv2d(256, 512, kernel_size=4, padding=1, stride=2)
+        torch.nn.init.xavier_uniform_(self.conv1.weight)
+        torch.nn.init.xavier_uniform_(self.conv2.weight)
+        torch.nn.init.xavier_uniform_(self.conv3.weight)
+        torch.nn.init.xavier_uniform_(self.conv4.weight)
+        torch.nn.init.xavier_uniform_(self.conv5.weight)
+        torch.nn.init.xavier_uniform_(self.conv6.weight)
+        torch.nn.init.xavier_uniform_(self.conv7.weight)
         
         self.conv8 = torch.nn.Conv2d(512, 1024, kernel_size=4, padding=0, stride=2)
         self.dec8 = torch.nn.ConvTranspose2d(1024, 512, kernel_size=4, padding=0, stride=2)
@@ -25,6 +32,13 @@ class TSAINetworkV1(torch.nn.Module):
         self.dec3 = torch.nn.ConvTranspose2d(128, 64, kernel_size=4, padding=1, stride=2)
         self.dec2 = torch.nn.ConvTranspose2d(64, 64, kernel_size=4, padding=1, stride=2)
         self.dec1 = torch.nn.ConvTranspose2d(64, 1, kernel_size=4, padding=1, stride=2)
+        torch.nn.init.xavier_uniform_(self.dec1.weight)
+        torch.nn.init.xavier_uniform_(self.dec2.weight)
+        torch.nn.init.xavier_uniform_(self.dec3.weight)
+        torch.nn.init.xavier_uniform_(self.dec4.weight)
+        torch.nn.init.xavier_uniform_(self.dec5.weight)
+        torch.nn.init.xavier_uniform_(self.dec6.weight)
+        torch.nn.init.xavier_uniform_(self.dec7.weight)
 
     def forward(self, x):
         # Y = Variable(x, requires_grad=True)

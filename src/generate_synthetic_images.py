@@ -158,7 +158,7 @@ def single_defect_type_generation(num_tot_samples):
                         current_whole_mask = (current_whole_mask > 127).astype(np.uint8) * 255
                         test_mask = (test_mask > 127).astype(np.uint8) * 255
                         current_whole_mask = np.logical_or(current_whole_mask, test_mask).astype(np.uint8) * 255
-                        count_tries = 11
+                        break
                     else:
                         count_tries += 1
                         
