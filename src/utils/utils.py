@@ -93,42 +93,44 @@ def generate_random_points(min_dist, max_points):
 def proliferate_points_randomly(image, points, max_spread, darkest_gray, lightest_gray, new_origin_threshold: float = 0.7):
 
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]  # 8 possible directions
+    # set the weights for the directions so diagonal spread is still possible but less likely
     directions_weights = [0.2, 0.2, 0.2, 0.2, 0.05, 0.05, 0.05, 0.05]
     for point in points:
         x, y = point
         tot_spread_count = random.randint(1, max_spread)
         spread_count = 0
         gray_color = (darkest_gray, darkest_gray, darkest_gray)
+        # Set the first Point as the Darkest Gray
         image[x,y] = gray_color
         
         while  spread_count < tot_spread_count:
-            # Randomly choose a direction to spread
+            # Randomly choose a direction to spread from the spread point
             dx, dy = random.choices(directions,weights=directions_weights, k=1)[0]
             new_x, new_y = x + dx, y + dy
             
             if 0 <= new_x < image.shape[0] and 0 <= new_y < image.shape[1]:
-                # Set a random gray intensity for the spread point
-                #intensity = random.randint(darkest_gray, lightest_gray)
+                # Set a lightest gray intensity for the new spread point
                 gray_color = (lightest_gray, lightest_gray, lightest_gray)
                 if np.all(image[new_x, new_y] == 255):
                     image[new_x, new_y] = gray_color
                     spread_count += 1
                 else:
-                    # Darken the pixel if it's already set
+                    # Darken the pixel if it's already set, randomly choosing 
+                    # between the actaul value and the darkest Gray
                     current_intensity = int(np.mean(image[new_x, new_y]))
                     new_intensity = random.randint(darkest_gray, current_intensity)
                     gray_color = (new_intensity, new_intensity, new_intensity)
                     image[new_x, new_y] = gray_color
+                    # Move randomply the spread origin to this point
                     if random.random() > new_origin_threshold:
-                        x, y = new_x, new_y  # Move the spread origin to this new point
-
+                        x, y = new_x, new_y 
     return image
 
 def generate_images_with_random_proliferation(min_dist, max_points, max_spread, darkest_gray, lightest_gray):
     # Generate random points on the white areas of the mask
     points = generate_random_points(min_dist, max_points)
     
-    # Create an empty RGB image for proliferation
+    # Create an empty white RGB image for proliferation
     gray_image_rgb = np.ones((1024, 1280, 3), dtype=np.uint8)*255
     
     # Proliferate points on the RGB image randomly
